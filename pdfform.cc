@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include <string>
+#include <fstream>
 
 GlobalParams * globalParams=0;
 UnicodeMap * uMap = 0;
@@ -28,6 +29,26 @@ const char * buttonTypeStrings[] = {
 	"Push",
 	"Radio",
 	0};
+
+int usage(const char * programName)
+{
+	std::cerr
+		<< "Usage:" << std::endl
+		<< "\t" << programName << " <file.pdf>" << std::endl
+		<< "\t\tDumps the form field information" << std::endl
+		<< "\t" << programName << " <file.pdf> <output.yaml>" << std::endl
+		<< "\t\tDumps the form field content as yaml" << std::endl
+		<< "\t" << programName << " <file.pdf> <input.yaml> <output.pdf>" << std::endl
+		<< "\t\tUses the yaml file to fill file.pdf into output.pdf" << std::endl
+		;
+	return -1;
+}
+
+int error(const char * message, int code=-1)
+{
+	std::cerr << message << std::endl;
+	return code;
+}
 
 std::string pdftext_2_utf8(GooString *s)
 {
@@ -106,7 +127,7 @@ int dumpPdfAsYaml(Form * form, std::ostream & outputfile)
 		{
 			FormFieldText * textField = dynamic_cast<FormFieldText*>(field);
 			GooString * content = textField->getContent();
-			out << YAML::Value << (content?pdftext_2_utf8(content):"");
+			out << YAML::Value << pdftext_2_utf8(content);
 			out << YAML::Comment(typeStrings[type]);
 			continue;
 		}
@@ -114,7 +135,8 @@ int dumpPdfAsYaml(Form * form, std::ostream & outputfile)
 		{
 			FormFieldChoice * choiceField = dynamic_cast<FormFieldChoice*>(field);
 			GooString * content = choiceField->getSelectedChoice();
-			out << YAML::Value << (content?pdftext_2_utf8(content):"");
+			// TODO: content can be NULL
+			out << YAML::Value << pdftext_2_utf8(content);
 			std::ostringstream os;
 			os << typeStrings[type] << ": ";
 			for (unsigned i = 0; i<choiceField->getNumChoices(); i++)
@@ -137,33 +159,79 @@ int dumpPdfAsYaml(Form * form, std::ostream & outputfile)
 	return 0;
 }
 
-
-int usage(const char * programName)
+int editPdfWithYaml(Form * form, YAML::Node & node)
 {
-	std::cerr
-		<< "Usage:" << std::endl
-		<< "\t" << programName << " <file.pdf>" << std::endl
-		<< "\t\tDumps the form field information" << std::endl
-		<< "\t" << programName << " <file.pdf> <output.yaml>" << std::endl
-		<< "\t\tDumps the form field content as yaml" << std::endl
-		<< "\t" << programName << " <file.pdf> <input.yaml> <output.pdf>" << std::endl
-		<< "\t\tUses the yaml file to fill file.pdf into output.pdf" << std::endl
-		;
-	return -1;
+	if (not node.IsMap()) return error("YAML root node should be a map");
+	for (unsigned i = 0; i < form->getNumFields(); i++)
+	{
+		FormField *field = form->getRootField(i);
+		FormFieldType type = field->getType();
+		std::string fieldName = pdftext_2_utf8(
+			field->getFullyQualifiedName());
+		if (not node[fieldName])
+		{
+			std::cerr
+				<< "Field '" << fieldName
+				<< "' missing at the yaml"
+				<< std::endl;
+			continue;
+		}
+
+		if (type == formText)
+		{
+			std::string value = node[fieldName].as<std::string>();
+			FormFieldText * textField = dynamic_cast<FormFieldText*>(field);
+			GooString * content = utf8_2_pdftext(value);
+			textField->setContentCopy(content);
+			if (content) delete content;
+			continue;
+		}
+		if (type == formChoice)
+		{
+			std::string value = node[fieldName].as<std::string>();
+			FormFieldChoice * choiceField = dynamic_cast<FormFieldChoice*>(field);
+			for (unsigned i = 0; i<choiceField->getNumChoices(); i++)
+			{
+				GooString * choiceText = choiceField->getChoice(i);
+				if (pdftext_2_utf8(choiceText)!=value) continue;
+				choiceField->select(i);
+				break;
+			}
+			// TODO: Just set the value if editable
+			// TODO: Choice not found error
+			continue;
+		}
+		{
+			std::cerr
+				<< "Ignored  Field: '" << fieldName
+				<< "' Type: " << typeStrings[type]
+				<< std::endl;
+		}
+	}
+	return 0;
 }
 
-int error(const char * message, int code=-1)
+
+template <typename T>
+class autodelete
 {
-	std::cerr << message << std::endl;
-	return code;
-}
+public:
+	autodelete(T*o) : _o(o) {}
+	~autodelete() { delete _o;}
+private:
+	T * _o;
+};
 
 
 int main(int argc, char** argv)
 {
 	if (argc<2) return usage(argv[0]);
+	const char * yamlFile = argc<3?0:argv[2];
+	const char * outputPdf = argc<4?0:argv[3];
 
 	globalParams = new GlobalParams;
+	autodelete<GlobalParams> _globalParams(globalParams);
+
 	globalParams->setTextEncoding(textEncName);
 
 	uMap = globalParams->getTextEncoding();
@@ -172,14 +240,8 @@ int main(int argc, char** argv)
 	GooString pdfFileName(argv[1]);
 
 	PDFDoc * doc = PDFDocFactory().createPDFDoc(pdfFileName);
-
 	if (not doc) return error("Unable to open document");
-
-	// TODO: check doc
-	unsigned nEmbedded = doc->getCatalog()->numEmbeddedFiles();
-	std::cout << "Embedded Files: " << nEmbedded << std::endl;
-	for (unsigned i = 0; i < nEmbedded; ++i)
-		std::cout << "Embeded " << i << std::endl;
+	autodelete<PDFDoc> _doc(doc);
 
 	Catalog::FormType formType = doc->getCatalog()->getFormType();
 
@@ -191,52 +253,27 @@ int main(int argc, char** argv)
 
 	Form *form = doc->getCatalog()->getForm();
 
-	dumpPdfAsYaml(form, std::cout);
-
-	for (unsigned i = 0; false && i < form->getNumFields(); i++)
+	if (outputPdf)
 	{
-		FormField *field = form->getRootField(i);
-		GooString *qualifiedName = field->getFullyQualifiedName();
-		FormFieldType type = field->getType();
-		if (type == formText)
-		{
-			// TODO: Escape name
-			FormFieldText * textField = dynamic_cast<FormFieldText*>(field);
-			GooString * content = textField->getContentCopy();
-			std::cout
-				<< qualifiedName->getCString() << ": "
-				;
-			if (content)
-			{
-				std::cout
-					<< "'" << pdftext_2_utf8(content).c_str() << "'"
-					;
-				delete content;
-			}
-			std::cout
-				<< " # " << typeStrings[type]
-				<< std::endl;
-
-			GooString *newValue = utf8_2_pdftext("toooomá ñacata");
-
-			textField->setContentCopy(newValue);
-			delete newValue;
-		}
-		else
-		{
-			std::cout
-				<< "Field: '" << qualifiedName->getCString() << "'\n"
-				<<"\tType: " << typeStrings[type] << std::endl;
-		}
+		YAML::Node node = YAML::LoadFile(argv[2]);
+		editPdfWithYaml(form, node);
+		dumpPdfAsYaml(form, std::cout);
+		GooString * outputFilename = new GooString(outputPdf);
+		doc->saveAs(outputFilename);
+		delete outputFilename;
 	}
-	GooString * outputFilename = new GooString(argv[2]);
-	doc->saveAs(outputFilename);
-	delete outputFilename;
-	std::cerr << "Saved!" << std::endl;
+	if (yamlFile)
+	{
+		std::ofstream output(argv[2]);
+		dumpPdfAsYaml(form, output);
+	}
+	else
+	{
+		dumpPdfAsYaml(form, std::cout);
+	}
+
 
 //	uMap->decRefCnt();
-	delete doc;
-	delete globalParams;
 
 	return 0;
 }
