@@ -93,9 +93,6 @@ GooString * utf8_2_pdftext(const std::string & s)
 		{
 			if (codepoint > 0xffff)
 			{
-//				result->append(static_cast<wchar_t>(0xd800 + (codepoint >> 10),1));
-//				result->append(static_cast<wchar_t>(0xdc00 + (codepoint & 0x03ff)),1);
-
 				result->append(0xd8 + (codepoint>>18)); // MSB
 				result->append(0xff & (codepoint>>10)); // LSB
 				result->append(0xdc + ((codepoint>>8)&0x03)); // MSB
@@ -262,7 +259,7 @@ int main(int argc, char** argv)
 		doc->saveAs(outputFilename);
 		delete outputFilename;
 	}
-	if (yamlFile)
+	else if (yamlFile)
 	{
 		std::ofstream output(argv[2]);
 		dumpPdfAsYaml(form, output);
@@ -271,9 +268,6 @@ int main(int argc, char** argv)
 	{
 		dumpPdfAsYaml(form, std::cout);
 	}
-
-
-//	uMap->decRefCnt();
 
 	return 0;
 }
