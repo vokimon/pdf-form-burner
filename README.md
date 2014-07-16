@@ -7,12 +7,12 @@ A tool to extract and fill PDF forms by means of YAML data.
 Dumping the form data contained in a PDF into a YAML file:
 
 	:::bash
-	$ pdfform <doc.pdf> <output.yaml>
+	$ pdfformburner <doc.pdf> <output.yaml>
 
 Filling doc.pdf with input.yaml to generate output.pdf
 
 	:::bash
-	$ pdfform doc.pdf input.yaml <output.pdf>
+	$ pdfformburner doc.pdf input.yaml <output.pdf>
 
 Automated filling and reading of PDF forms may offer agility
 to many unskippable bureaucratic processes.
