@@ -33,11 +33,10 @@ const char * buttonTypeStrings[] = {
 int usage(const char * programName)
 {
 	std::cerr
+		<< "A tool to extract and fill PDF forms by means of YAML data.\n"
 		<< "Usage:" << std::endl
-		<< "\t" << programName << " <file.pdf>" << std::endl
-		<< "\t\tDumps the form field information" << std::endl
-		<< "\t" << programName << " <file.pdf> <output.yaml>" << std::endl
-		<< "\t\tDumps the form field content as yaml" << std::endl
+		<< "\t" << programName << " <file.pdf> [<output.yaml>]" << std::endl
+		<< "\t\tDumps the form field data into a YAML file (or to standard output)" << std::endl
 		<< "\t" << programName << " <file.pdf> <input.yaml> <output.pdf>" << std::endl
 		<< "\t\tUses the yaml file to fill file.pdf into output.pdf" << std::endl
 		;
