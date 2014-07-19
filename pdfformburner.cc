@@ -388,7 +388,7 @@ int main(int argc, char** argv)
 	{
 		YAML::Node node = YAML::LoadFile(argv[2]);
 		fillPdfWithYaml(form, node);
-		extractYamlFromPdf(form, std::cout); // Debug
+//		extractYamlFromPdf(form, std::cout); // Debug
 		GooString * outputFilename = new GooString(outputPdf);
 		doc->saveAs(outputFilename);
 		delete outputFilename;
