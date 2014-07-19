@@ -1,0 +1,5 @@
+pdfformburner (0.1-1) unstable; urgency=low
+
+  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+
+ -- David García Garzón <david.garcia@upf.edu>  Sat, 19 Jul 2014 11:43:40 +0200

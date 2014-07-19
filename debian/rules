@@ -1,0 +1,25 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+export DESTDIR=$(CURDIR)/debian/pdfformburner/
+export SCONS=scons
+export SCONSOPT=prefix=/usr --install-sandbox=$(DESTDIR)
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	$(SCONS) $(SCONSOPT)
+
+override_dh_auto_clean:
+	dh_auto_clean
+	$(SCONS)  -c $(SCONSOPT)
+	rm -f .scons.options
+	rm -f .sconsign.dblite
+
+override_dh_auto_install:
+	$(SCONS) install  $(SCONSOPT)
+
