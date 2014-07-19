@@ -2,6 +2,16 @@
 
 A tool to extract and fill PDF forms by means of YAML data.
 
+This command line tool can be used two fold:
+to extract form data in a PDF as a YAML file
+and to fill a PDF form with data in a YAML file.
+
+YAML format is more convenient than other formats such task, 
+such as FDF and XML,
+as they can be easily understood and edited by humans and still,
+they are machine readable.
+
+
 ## Usage examples
 
 Dumping the form data contained in a PDF into a YAML file:
