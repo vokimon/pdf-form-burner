@@ -13,7 +13,9 @@ env.SConsignFile() # Single signature file
 
 
 env.ParseConfig('pkg-config --libs --cflags poppler yaml-cpp')
-env.Append(CCFLAGS='-g')
+env.Append(CCFLAGS=[
+	'-g',
+	])
 
 program = env.Program('pdfformburner', Glob("*.cc"))
 

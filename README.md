@@ -45,7 +45,10 @@ So in Debian and Ubuntu:
 
 ## Limitations
 
-- Only suports the following field types: Text and non-editable and non-multiple choice fields.
+- Only suports the following field types:
+	- Text fields
+	- Non-editable single choice fields
+	- Check buttons
 - Just root fields (it does not decent on the hierarchy)
 
 

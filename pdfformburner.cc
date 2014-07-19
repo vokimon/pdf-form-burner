@@ -30,6 +30,16 @@ const char * buttonTypeStrings[] = {
 	"Radio",
 	0};
 
+template <typename T>
+class autodelete
+{
+public:
+	autodelete(T*o) : _o(o) {}
+	~autodelete() { delete _o;}
+private:
+	T * _o;
+};
+
 int usage(const char * programName)
 {
 	std::cerr
@@ -43,7 +53,7 @@ int usage(const char * programName)
 	return -1;
 }
 
-int error(const char * message, int code=-1)
+int error(const std::string & message, int code=-1)
 {
 	std::cerr << message << std::endl;
 	return code;
@@ -108,7 +118,65 @@ GooString * utf8_2_pdftext(const std::string & s)
 }
 
 
-int dumpPdfAsYaml(Form * form, std::ostream & outputfile)
+int extractField(FormFieldText * field, YAML::Emitter & out )
+{
+	GooString * content = field->getContent();
+	out << YAML::Value << pdftext_2_utf8(content);
+	out << YAML::Comment(typeStrings[field->getType()]);
+}
+
+
+// TODO: Test
+int extractFieldMultipleChoice(FormFieldChoice * field, YAML::Emitter & out)
+{
+	GooString * content = field->getSelectedChoice();
+	// TODO: content can be NULL
+	out << YAML::BeginSeq;
+	for (unsigned i = 0; i<field->getNumChoices(); i++)
+	{
+		if (not field->isSelected(i)) continue;
+		out << YAML::Value << pdftext_2_utf8(field->getChoice(i));
+	}
+	out << YAML::EndSeq;
+	std::ostringstream os;
+	os << typeStrings[field->getType()] << ": ";
+	for (unsigned i = 0; i<field->getNumChoices(); i++)
+		os << (i?", ":"") << pdftext_2_utf8(field->getChoice(i));
+	out << YAML::Comment(os.str());
+}
+
+int extractFieldSingleChoice(FormFieldChoice * field, YAML::Emitter & out)
+{
+	GooString * content = field->getSelectedChoice();
+	// TODO: content can be NULL
+	out << YAML::Value << pdftext_2_utf8(content);
+	std::ostringstream os;
+	os << typeStrings[field->getType()] << ": ";
+	for (unsigned i = 0; i<field->getNumChoices(); i++)
+		os << (i?", ":"") << pdftext_2_utf8(field->getChoice(i));
+	out << YAML::Comment(os.str());
+}
+
+int extractField(FormFieldChoice * field, YAML::Emitter & out)
+{
+	if (field->isMultiSelect())
+		return extractFieldMultipleChoice(field, out);
+	return extractFieldSingleChoice(field, out);
+}
+
+int extractField(FormFieldButton * field, YAML::Emitter & out)
+{
+	FormButtonType type = field->getButtonType();
+	if (type == formButtonPush)
+		return error("Push button ignored");
+	out
+		<< YAML::Value << not field->getState((char*)"Off")
+		<< YAML::Comment(buttonTypeStrings[type])
+		;
+	// TODO: Add to the comment available onValues in childs
+}
+
+int extractYamlFromPdf(Form * form, std::ostream & outputfile)
 {
 	YAML::Emitter out(outputfile);
 	out << YAML::BeginMap;
@@ -122,22 +190,19 @@ int dumpPdfAsYaml(Form * form, std::ostream & outputfile)
 		if (type == formText)
 		{
 			FormFieldText * textField = dynamic_cast<FormFieldText*>(field);
-			GooString * content = textField->getContent();
-			out << YAML::Value << pdftext_2_utf8(content);
-			out << YAML::Comment(typeStrings[type]);
+			extractField(textField, out);
 			continue;
 		}
 		if (type == formChoice)
 		{
 			FormFieldChoice * choiceField = dynamic_cast<FormFieldChoice*>(field);
-			GooString * content = choiceField->getSelectedChoice();
-			// TODO: content can be NULL
-			out << YAML::Value << pdftext_2_utf8(content);
-			std::ostringstream os;
-			os << typeStrings[type] << ": ";
-			for (unsigned i = 0; i<choiceField->getNumChoices(); i++)
-				os << (i?", ":"") << pdftext_2_utf8(choiceField->getChoice(i));
-			out << YAML::Comment(os.str());
+			extractField(choiceField, out);
+			continue;
+		}
+		if (type == formButton)
+		{
+			FormFieldButton * buttonField = dynamic_cast<FormFieldButton*>(field);
+			extractField(buttonField, out);
 			continue;
 		}
 		{
@@ -155,7 +220,93 @@ int dumpPdfAsYaml(Form * form, std::ostream & outputfile)
 	return 0;
 }
 
-int editPdfWithYaml(Form * form, YAML::Node & node)
+// TODO: Test this
+int fillFieldMultiple(FormFieldChoice * field, const YAML::Node & node)
+{
+	if (not node.IsSequence())
+		return error("Sequence required for field "+
+			pdftext_2_utf8(field->getFullyQualifiedName()));
+	std::set<std::string> values;
+	for (YAML::Node::const_iterator e=node.begin(); e != node.end(); e++ )
+		values.insert(e->as<std::string>());
+
+	field->deselectAll();
+
+	for (unsigned i = 0; i<field->getNumChoices(); i++)
+	{
+		GooString * choiceText = field->getChoice(i);
+		std::string value = pdftext_2_utf8(choiceText);
+		if (values.find(value)==values.end()) continue;
+		field->select(i);
+		values.erase(value);
+	}
+	if (values.empty()) return 0;
+	return error("Multiple choice value not supported in field '"+
+			pdftext_2_utf8(field->getFullyQualifiedName()));
+	return 0;
+}
+
+int fillFieldSingle(FormFieldChoice * field, const YAML::Node & node)
+{
+	if (not node.IsScalar())
+		return error("String required for field "+
+			pdftext_2_utf8(field->getFullyQualifiedName()));
+
+	std::string value = node.as<std::string>();
+	for (unsigned i = 0; i<field->getNumChoices(); i++)
+	{
+		GooString * choiceText = field->getChoice(i);
+		if (pdftext_2_utf8(choiceText)!=value) continue;
+		field->select(i);
+		return 0;
+	}
+	if (not field->hasEdit())
+		return error("Invalid value for field "+
+			pdftext_2_utf8(field->getFullyQualifiedName())+" '"+value+"'");
+
+	// Editable choice field can have arbitrary values
+	GooString * content = utf8_2_pdftext(value);
+	field->setEditChoice(content);
+	if (content) delete content;
+	return 0;
+}
+
+int fillField(FormFieldChoice * field, const YAML::Node & node)
+{
+	if (field->isMultiSelect())
+		fillFieldMultiple(field, node);
+	else
+		fillFieldSingle(field, node);
+}
+
+int fillField(FormFieldText * field, const YAML::Node & node)
+{
+	if (not node.IsScalar())
+		return error("String required for field "+
+			pdftext_2_utf8(field->getFullyQualifiedName()));
+	std::string value = node.as<std::string>();
+	GooString * content = utf8_2_pdftext(value);
+	field->setContentCopy(content);
+	if (content) delete content;
+	return 0;
+}
+
+int fillField(FormFieldButton * field, const YAML::Node & node)
+{
+	if (not node.IsScalar())
+		return error("Boolean value required for field "+
+			pdftext_2_utf8(field->getFullyQualifiedName()));
+	bool value = node.as<bool>() || true;
+	// TODO: True value should be taken from the field
+	bool ok = field->setState((char*)(value?"Yes":"Off"));
+	if (not ok)
+		return error("Unable to set true value to "+
+			pdftext_2_utf8(field->getFullyQualifiedName()));
+	return 0;
+}
+
+
+int fillPdfWithYaml(Form * form, const YAML::Node & node)
 {
 	if (not node.IsMap()) return error("YAML root node should be a map");
 	for (unsigned i = 0; i < form->getNumFields(); i++)
@@ -175,26 +326,20 @@ int editPdfWithYaml(Form * form, YAML::Node & node)
 
 		if (type == formText)
 		{
-			std::string value = node[fieldName].as<std::string>();
 			FormFieldText * textField = dynamic_cast<FormFieldText*>(field);
-			GooString * content = utf8_2_pdftext(value);
-			textField->setContentCopy(content);
-			if (content) delete content;
+			fillField(textField, node[fieldName]);
 			continue;
 		}
 		if (type == formChoice)
 		{
-			std::string value = node[fieldName].as<std::string>();
 			FormFieldChoice * choiceField = dynamic_cast<FormFieldChoice*>(field);
-			for (unsigned i = 0; i<choiceField->getNumChoices(); i++)
-			{
-				GooString * choiceText = choiceField->getChoice(i);
-				if (pdftext_2_utf8(choiceText)!=value) continue;
-				choiceField->select(i);
-				break;
-			}
-			// TODO: Just set the value if editable
-			// TODO: Choice not found error
+			fillField(choiceField, node[fieldName]);
+			continue;
+		}
+		if (type == formButton)
+		{
+			FormFieldButton * buttonField = dynamic_cast<FormFieldButton*>(field);
+			fillField(buttonField, node[fieldName]);
 			continue;
 		}
 		{
@@ -207,16 +352,6 @@ int editPdfWithYaml(Form * form, YAML::Node & node)
 	return 0;
 }
 
-
-template <typename T>
-class autodelete
-{
-public:
-	autodelete(T*o) : _o(o) {}
-	~autodelete() { delete _o;}
-private:
-	T * _o;
-};
 
 
 int main(int argc, char** argv)
@@ -252,8 +387,8 @@ int main(int argc, char** argv)
 	if (outputPdf)
 	{
 		YAML::Node node = YAML::LoadFile(argv[2]);
-		editPdfWithYaml(form, node);
-		dumpPdfAsYaml(form, std::cout);
+		fillPdfWithYaml(form, node);
+		extractYamlFromPdf(form, std::cout); // Debug
 		GooString * outputFilename = new GooString(outputPdf);
 		doc->saveAs(outputFilename);
 		delete outputFilename;
@@ -261,11 +396,11 @@ int main(int argc, char** argv)
 	else if (yamlFile)
 	{
 		std::ofstream output(argv[2]);
-		dumpPdfAsYaml(form, output);
+		extractYamlFromPdf(form, output);
 	}
 	else
 	{
-		dumpPdfAsYaml(form, std::cout);
+		extractYamlFromPdf(form, std::cout);
 	}
 
 	return 0;
