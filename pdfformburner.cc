@@ -118,16 +118,18 @@ GooString * utf8_2_pdftext(const std::string & s)
 }
 
 
-int extractField(FormFieldText * field, YAML::Emitter & out )
+int extract(FormFieldText * field, YAML::Emitter & out )
 {
 	GooString * content = field->getContent();
+	if (field->isMultiline())
+		out << YAML::Literal;
 	out << YAML::Value << pdftext_2_utf8(content);
 	out << YAML::Comment(typeStrings[field->getType()]);
 }
 
 
 // TODO: Test
-int extractFieldMultipleChoice(FormFieldChoice * field, YAML::Emitter & out)
+int extractMultiple(FormFieldChoice * field, YAML::Emitter & out)
 {
 	GooString * content = field->getSelectedChoice();
 	// TODO: content can be NULL
@@ -145,7 +147,7 @@ int extractFieldMultipleChoice(FormFieldChoice * field, YAML::Emitter & out)
 	out << YAML::Comment(os.str());
 }
 
-int extractFieldSingleChoice(FormFieldChoice * field, YAML::Emitter & out)
+int extractSingle(FormFieldChoice * field, YAML::Emitter & out)
 {
 	GooString * content = field->getSelectedChoice();
 	// TODO: content can be NULL
@@ -157,14 +159,14 @@ int extractFieldSingleChoice(FormFieldChoice * field, YAML::Emitter & out)
 	out << YAML::Comment(os.str());
 }
 
-int extractField(FormFieldChoice * field, YAML::Emitter & out)
+int extract(FormFieldChoice * field, YAML::Emitter & out)
 {
 	if (field->isMultiSelect())
-		return extractFieldMultipleChoice(field, out);
-	return extractFieldSingleChoice(field, out);
+		return extractMultiple(field, out);
+	return extractSingle(field, out);
 }
 
-int extractField(FormFieldButton * field, YAML::Emitter & out)
+int extract(FormFieldButton * field, YAML::Emitter & out)
 {
 	FormButtonType type = field->getButtonType();
 	if (type == formButtonPush)
@@ -190,19 +192,19 @@ int extractYamlFromPdf(Form * form, std::ostream & outputfile)
 		if (type == formText)
 		{
 			FormFieldText * textField = dynamic_cast<FormFieldText*>(field);
-			extractField(textField, out);
+			extract(textField, out);
 			continue;
 		}
 		if (type == formChoice)
 		{
 			FormFieldChoice * choiceField = dynamic_cast<FormFieldChoice*>(field);
-			extractField(choiceField, out);
+			extract(choiceField, out);
 			continue;
 		}
 		if (type == formButton)
 		{
 			FormFieldButton * buttonField = dynamic_cast<FormFieldButton*>(field);
-			extractField(buttonField, out);
+			extract(buttonField, out);
 			continue;
 		}
 		{
@@ -221,7 +223,7 @@ int extractYamlFromPdf(Form * form, std::ostream & outputfile)
 }
 
 // TODO: Test this
-int fillFieldMultiple(FormFieldChoice * field, const YAML::Node & node)
+int fillMultiple(FormFieldChoice * field, const YAML::Node & node)
 {
 	if (not node.IsSequence())
 		return error("Sequence required for field "+
@@ -246,7 +248,7 @@ int fillFieldMultiple(FormFieldChoice * field, const YAML::Node & node)
 	return 0;
 }
 
-int fillFieldSingle(FormFieldChoice * field, const YAML::Node & node)
+int fillSingle(FormFieldChoice * field, const YAML::Node & node)
 {
 	if (not node.IsScalar())
 		return error("String required for field "+
@@ -271,15 +273,15 @@ int fillFieldSingle(FormFieldChoice * field, const YAML::Node & node)
 	return 0;
 }
 
-int fillField(FormFieldChoice * field, const YAML::Node & node)
+int fill(FormFieldChoice * field, const YAML::Node & node)
 {
 	if (field->isMultiSelect())
-		fillFieldMultiple(field, node);
+		fillMultiple(field, node);
 	else
-		fillFieldSingle(field, node);
+		fillSingle(field, node);
 }
 
-int fillField(FormFieldText * field, const YAML::Node & node)
+int fill(FormFieldText * field, const YAML::Node & node)
 {
 	if (not node.IsScalar())
 		return error("String required for field "+
@@ -291,7 +293,7 @@ int fillField(FormFieldText * field, const YAML::Node & node)
 	return 0;
 }
 
-int fillField(FormFieldButton * field, const YAML::Node & node)
+int fill(FormFieldButton * field, const YAML::Node & node)
 {
 	if (not node.IsScalar())
 		return error("Boolean value required for field "+
@@ -327,19 +329,19 @@ int fillPdfWithYaml(Form * form, const YAML::Node & node)
 		if (type == formText)
 		{
 			FormFieldText * textField = dynamic_cast<FormFieldText*>(field);
-			fillField(textField, node[fieldName]);
+			fill(textField, node[fieldName]);
 			continue;
 		}
 		if (type == formChoice)
 		{
 			FormFieldChoice * choiceField = dynamic_cast<FormFieldChoice*>(field);
-			fillField(choiceField, node[fieldName]);
+			fill(choiceField, node[fieldName]);
 			continue;
 		}
 		if (type == formButton)
 		{
 			FormFieldButton * buttonField = dynamic_cast<FormFieldButton*>(field);
-			fillField(buttonField, node[fieldName]);
+			fill(buttonField, node[fieldName]);
 			continue;
 		}
 		{
