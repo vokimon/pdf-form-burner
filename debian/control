@@ -3,7 +3,7 @@ Section: text
 Priority: optional
 Maintainer: David García Garzón <david.garcia@upf.edu>
 Build-Depends: debhelper (>= 8.0.0), scons, libyaml-cpp-dev, libpoppler-dev
-Standards-Version: 3.9.4
+Standards-Version: 3.9.5
 Homepage: https://github.com/vokimon/pdf-form-burner
 
 Package: pdfformburner
