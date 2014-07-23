@@ -12,6 +12,7 @@
 #include <string>
 #include <fstream>
 
+bool showTypes = false;
 GlobalParams * globalParams=0;
 UnicodeMap * uMap = 0;
 static char textEncName[128] = "UTF-8";
@@ -124,7 +125,8 @@ int extract(FormFieldText * field, YAML::Emitter & out )
 	if (field->isMultiline())
 		out << YAML::Literal;
 	out << YAML::Value << pdftext_2_utf8(content);
-	out << YAML::Comment(typeStrings[field->getType()]);
+	if (showTypes)
+		out << YAML::Comment(typeStrings[field->getType()]);
 }
 
 
@@ -140,11 +142,14 @@ int extractMultiple(FormFieldChoice * field, YAML::Emitter & out)
 		out << YAML::Value << pdftext_2_utf8(field->getChoice(i));
 	}
 	out << YAML::EndSeq;
-	std::ostringstream os;
-	os << typeStrings[field->getType()] << ": ";
-	for (unsigned i = 0; i<field->getNumChoices(); i++)
-		os << (i?", ":"") << pdftext_2_utf8(field->getChoice(i));
-	out << YAML::Comment(os.str());
+	if (showTypes)
+	{
+		std::ostringstream os;
+		os << typeStrings[field->getType()] << ": ";
+		for (unsigned i = 0; i<field->getNumChoices(); i++)
+			os << (i?", ":"") << pdftext_2_utf8(field->getChoice(i));
+		out << YAML::Comment(os.str());
+	}
 }
 
 int extractSingle(FormFieldChoice * field, YAML::Emitter & out)
@@ -152,11 +157,14 @@ int extractSingle(FormFieldChoice * field, YAML::Emitter & out)
 	GooString * content = field->getSelectedChoice();
 	// TODO: content can be NULL
 	out << YAML::Value << pdftext_2_utf8(content);
-	std::ostringstream os;
-	os << typeStrings[field->getType()] << ": ";
-	for (unsigned i = 0; i<field->getNumChoices(); i++)
-		os << (i?", ":"") << pdftext_2_utf8(field->getChoice(i));
-	out << YAML::Comment(os.str());
+	if (showTypes)
+	{
+		std::ostringstream os;
+		os << typeStrings[field->getType()] << ": ";
+		for (unsigned i = 0; i<field->getNumChoices(); i++)
+			os << (i?", ":"") << pdftext_2_utf8(field->getChoice(i));
+		out << YAML::Comment(os.str());
+	}
 }
 
 int extract(FormFieldChoice * field, YAML::Emitter & out)
@@ -172,9 +180,9 @@ int extract(FormFieldButton * field, YAML::Emitter & out)
 	if (type == formButtonPush)
 		return error("Push button ignored");
 	out
-		<< YAML::Value << not field->getState((char*)"Off")
-		<< YAML::Comment(buttonTypeStrings[type])
-		;
+		<< YAML::Value << not field->getState((char*)"Off");
+	if (showTypes)
+		out << YAML::Comment(buttonTypeStrings[type]);
 	// TODO: Add to the comment available onValues in childs
 }
 
@@ -388,12 +396,13 @@ int main(int argc, char** argv)
 
 	if (outputPdf)
 	{
-		YAML::Node node = yamlFile==std::string("-")? YAML::LoadFile(yamlFile) : YAML::Load(std::cin);
+		bool usingStdIn = yamlFile==std::string("-");
+		YAML::Node node = usingStdIn ? YAML::Load(std::cin) : YAML::LoadFile(yamlFile);
 		fillPdfWithYaml(form, node);
 //		extractYamlFromPdf(form, std::cout); // Debug
 		GooString * outputFilename = new GooString(outputPdf);
+		autodelete<GooString> _outputFilename(outputFilename);
 		doc->saveAs(outputFilename);
-		delete outputFilename;
 	}
 	else if (yamlFile)
 	{
