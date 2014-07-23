@@ -388,7 +388,7 @@ int main(int argc, char** argv)
 
 	if (outputPdf)
 	{
-		YAML::Node node = YAML::LoadFile(argv[2]);
+		YAML::Node node = yamlFile==std::string("-")? YAML::LoadFile(yamlFile) : YAML::Load(std::cin);
 		fillPdfWithYaml(form, node);
 //		extractYamlFromPdf(form, std::cout); // Debug
 		GooString * outputFilename = new GooString(outputPdf);
@@ -397,7 +397,7 @@ int main(int argc, char** argv)
 	}
 	else if (yamlFile)
 	{
-		std::ofstream output(argv[2]);
+		std::ofstream output(yamlFile);
 		extractYamlFromPdf(form, output);
 	}
 	else
