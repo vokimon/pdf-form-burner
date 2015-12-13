@@ -18,13 +18,15 @@ a single unicode encoding, utf-8, to care about.
 
 Dumping the form data contained in a PDF into a YAML file:
 
-	:::bash
-	$ pdfformburner <doc.pdf> <output.yaml>
+```bash
+$ pdfformburner <doc.pdf> <output.yaml>
+```
 
 Filling doc.pdf with input.yaml to generate output.pdf
 
-	:::bash
-	$ pdfformburner doc.pdf input.yaml <output.pdf>
+```bash
+$ pdfformburner doc.pdf input.yaml <output.pdf>
+```
 
 Automated filling and reading of PDF forms may offer agility
 to many unskippable bureaucratic processes.
