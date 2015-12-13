@@ -51,24 +51,31 @@ the only encoding you have to deal with is [UTF-8].
 - Scons, to build it
 - poppler, to access PDF elements
 - yaml-cpp, to load and dump YAML files
+- libboost-dev, a dependency of yaml-cpp
 
 So in Debian and Ubuntu:
 
-	:::bash
-	$ sudo apt-get install libyaml-cpp-dev libpoppler-dev scons
+```bash
+$ sudo apt-get install libyaml-cpp-dev libpoppler-dev scons libboost-dev
+```
 
 ## Install
 
-	:::bash
-	$ scons
-	$ sudo scons intall
+```bash
+$ scons
+$ sudo scons intall
+```
 
 ## Debian packaging
 
 Debian packaging is available at the 'debian' branch. You can build the package with the command:
 
-	:::bash
-	gbp buildpackage --git-ignore-new --git-upstream-branch=master --git-debian-branch=debian --git-upstream-tag=v1.0
+`` bash
+sudo apt-get install debhelper git-buildpackage
+git checkout debian
+gbp buildpackage --git-ignore-new --git-upstream-branch=master --git-debian-branch=debian --git-upstream-tag=v1.0
+```
+
 
 
 
