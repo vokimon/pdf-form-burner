@@ -72,7 +72,7 @@ $ sudo scons intall
 
 Debian packaging is available at the 'debian' branch. You can build the package with the command:
 
-`` bash
+```bash
 sudo apt-get install debhelper git-buildpackage
 git checkout debian
 gbp buildpackage --git-ignore-new --git-upstream-branch=master --git-debian-branch=debian --git-upstream-tag=v1.0
