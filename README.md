@@ -38,6 +38,14 @@ the only encoding you have to deal with is [UTF-8].
 [FDF]:(http://en.wikipedia.org/wiki/Forms_Data_Format)
 [UTF-8]:(http://www.utf8everywhere.org/)
 
+## Limitations
+
+- Only suports the following field types:
+	- Text fields
+	- Non-editable single choice fields
+	- Check buttons
+- Just root fields (it does not decent on the hierarchy)
+
 ## Dependencies
 
 - Scons, to build it
@@ -55,13 +63,12 @@ So in Debian and Ubuntu:
 	$ scons
 	$ sudo scons intall
 
-## Limitations
+## Debian packaging
 
-- Only suports the following field types:
-	- Text fields
-	- Non-editable single choice fields
-	- Check buttons
-- Just root fields (it does not decent on the hierarchy)
+Debian packaging is available at the 'debian' branch. You can build the package with the command:
+
+	:::bash
+	gbp buildpackage --git-ignore-new --git-upstream-branch=master --git-debian-branch=debian --git-upstream-tag=v1.0
 
 
 
