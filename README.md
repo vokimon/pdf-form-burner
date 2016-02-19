@@ -18,13 +18,15 @@ a single unicode encoding, utf-8, to care about.
 
 Dumping the form data contained in a PDF into a YAML file:
 
-	:::bash
-	$ pdfformburner <doc.pdf> <output.yaml>
+```bash
+$ pdfformburner <doc.pdf> <output.yaml>
+```
 
 Filling doc.pdf with input.yaml to generate output.pdf
 
-	:::bash
-	$ pdfformburner doc.pdf input.yaml <output.pdf>
+```bash
+$ pdfformburner doc.pdf input.yaml <output.pdf>
+```
 
 Automated filling and reading of PDF forms may offer agility
 to many unskippable bureaucratic processes.
@@ -44,31 +46,49 @@ the only encoding you have to deal with is [UTF-8].
 	- Text fields
 	- Non-editable single choice fields
 	- Check buttons
-- Just root fields (it does not decent on the hierarchy)
 
 ## Dependencies
 
 - Scons, to build it
 - poppler, to access PDF elements
 - yaml-cpp, to load and dump YAML files
+- libboost-dev, a dependency of yaml-cpp
 
 So in Debian and Ubuntu:
 
-	:::bash
-	$ sudo apt-get install libyaml-cpp-dev libpoppler-dev scons
+```bash
+$ sudo apt-get install libyaml-cpp-dev libpoppler-dev scons libboost-dev
+```
 
 ## Install
 
-	:::bash
-	$ scons
-	$ sudo scons intall
+```bash
+$ scons
+$ sudo scons intall
+```
 
 ## Debian packaging
 
 Debian packaging is available at the 'debian' branch. You can build the package with the command:
 
-	:::bash
-	gbp buildpackage --git-ignore-new --git-upstream-branch=master --git-debian-branch=debian --git-upstream-tag=v1.0
+```bash
+sudo apt-get install debhelper git-buildpackage
+git checkout debian
+gbp buildpackage --git-ignore-new --git-upstream-branch=master --git-debian-branch=debian --git-upstream-tag=v1.0
+```
+
+## Changelog
+
+- 1.1
+	- Nested fields supported
+- 1.0
+	- First stable version
+
+
+
+
+
+
 
 
 
