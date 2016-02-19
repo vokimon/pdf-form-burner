@@ -46,7 +46,6 @@ the only encoding you have to deal with is [UTF-8].
 	- Text fields
 	- Non-editable single choice fields
 	- Check buttons
-- Just root fields (it does not decent on the hierarchy)
 
 ## Dependencies
 
@@ -77,6 +76,18 @@ sudo apt-get install debhelper git-buildpackage
 git checkout debian
 gbp buildpackage --git-ignore-new --git-upstream-branch=master --git-debian-branch=debian --git-upstream-tag=v1.0
 ```
+
+## Changelog
+
+- 1.1
+	- Nested fields supported
+- 1.0
+	- First stable version
+
+
+
+
+
 
 
 
