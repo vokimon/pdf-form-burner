@@ -79,10 +79,17 @@ gbp buildpackage --git-ignore-new --git-upstream-branch=master --git-debian-bran
 
 ## Changelog
 
-- 1.1
-	- Nested fields supported
-- 1.0
-	- First stable version
+### 1.2
+
+- Properly fill checkboxes
+
+### 1.1
+
+- Nested fields supported
+
+### 1.0
+
+- First stable version
 
 
 

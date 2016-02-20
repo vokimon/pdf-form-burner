@@ -334,12 +334,14 @@ int fill(FormFieldButton * field, const YAML::Node & node)
 	if (not node.IsScalar())
 		return error("Boolean value required for field "+
 			pdftext_2_utf8(field->getFullyQualifiedName()));
-	bool value = node.as<bool>() || true;
+	bool value = node.as<bool>();
 	// TODO: True value should be taken from the field
-	bool ok = field->setState((char*)(value?"Yes":"Off"));
-	if (not ok)
-		return error("Unable to set true value to "+
+	FormWidget * widget = field->getWidget(0);
+	FormWidgetButton * button = dynamic_cast<FormWidgetButton*>(widget);
+	if (not button)
+		return error("Unable to set truth value to "+
 			pdftext_2_utf8(field->getFullyQualifiedName()));
+	button->setState(value);
 	return 0;
 }
 
