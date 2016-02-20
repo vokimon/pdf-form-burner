@@ -1,3 +1,9 @@
+pdfformburner (1.2-1) trusty; urgency=medium
+
+  * New upstream release
+
+ -- David García Garzón <david.garcia@upf.edu>  Fri, 19 Feb 2016 23:53:11 +0100
+
 pdfformburner (1.1-1) trusty; urgency=medium
 
   * New upstream release
