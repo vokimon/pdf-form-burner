@@ -345,47 +345,42 @@ int fill(FormFieldButton * field, const YAML::Node & node)
 	return 0;
 }
 
-void fillField(FormField * field, const YAML::Node & node)
+int fillField(FormField * field, const YAML::Node & node)
 {
 	FormFieldType type = field->getType();
 	std::string fieldName = pdftext_2_utf8(
 		field->getPartialName());
 	if (not node[fieldName])
-	{
-		std::cerr
-			<< "\033[31;1m"
-			<< "Field '" << fieldName
-			<< "' missing at the yaml"
-			<< "\033[0m"
-			<< std::endl;
-		return;
-	}
+		return error("Missing yaml field '" + fieldName + "'");
+
+	const YAML::Node & theNode = node[fieldName];
 
 	if (type == formText)
 	{
 		FormFieldText * textField = dynamic_cast<FormFieldText*>(field);
-		fill(textField, node[fieldName]);
-		return;
+		return fill(textField, theNode);
 	}
 	if (type == formChoice)
 	{
 		FormFieldChoice * choiceField = dynamic_cast<FormFieldChoice*>(field);
-		fill(choiceField, node[fieldName]);
-		return;
+		return fill(choiceField, theNode);
 	}
 	if (type == formButton)
 	{
 		FormFieldButton * buttonField = dynamic_cast<FormFieldButton*>(field);
-		fill(buttonField, node[fieldName]);
-		return;
+		return fill(buttonField, theNode);
 	}
 	{
 		for (unsigned i = 0; i < FormFieldHack::getNumChildrenFields(field); i++)
 		{
 			FormField *subfield = FormFieldHack::getChildField(field, i);
-			fillField(subfield, node[fieldName]);
+			int error = fillField(subfield, theNode);
+			if (error) return error;
 		}
+		return 0;
 	}
+	return error("Unreconigzed type filling '" +
+		pdftext_2_utf8(field->getFullyQualifiedName()) + "'");
 }
 
 int fillPdfWithYaml(Form * form, const YAML::Node & node)
@@ -394,7 +389,8 @@ int fillPdfWithYaml(Form * form, const YAML::Node & node)
 	for (unsigned i = 0; i < form->getNumFields(); i++)
 	{
 		FormField *field = form->getRootField(i);
-		fillField(field, node);
+		int error = fillField(field, node);
+		if (error) return error;
 	}
 	return 0;
 }
