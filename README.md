@@ -79,6 +79,13 @@ gbp buildpackage --git-ignore-new --git-upstream-branch=master --git-debian-bran
 
 ## Changelog
 
+### 1.3
+
+- Port to libpoppler v0.84.0
+- Alternate names (ui names and mapping names) extracted as comments
+- Fix: non-terminal nodes can have type for inheritance
+- Fix: numChildren in terminal nodes means num widgets
+
 ### 1.2
 
 - Properly fill checkboxes
