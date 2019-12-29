@@ -218,7 +218,27 @@ void extractField(FormField * field, YAML::Emitter & out)
 	FormFieldType type = field->getType();
 	std::string fieldName = pdftext_2_utf8(
 		field->getPartialName());
+	std::string alternateName = pdftext_2_utf8(
+		field->getAlternateUiName());
+	std::string mappingName = pdftext_2_utf8(
+		field->getMappingName());
 	out << YAML::Key << fieldName;
+	if (!mappingName.empty() && mappingName!=fieldName)
+		out << YAML::Comment(mappingName);
+	if (!alternateName.empty() && alternateName!=fieldName)
+		out << YAML::Comment(alternateName);
+	int nChildren = FormFieldHack::getNumChildrenFields(field);
+	if (nChildren)
+	{
+		out << YAML::BeginMap;
+		for (unsigned i = 0; i < nChildren; i++)
+		{
+			FormField *subfield = FormFieldHack::getChildField(field, i);
+			extractField(subfield, out);
+		}
+		out << YAML::EndMap;
+		return;
+	}
 	if (type == formText)
 	{
 		FormFieldText * textField = dynamic_cast<FormFieldText*>(field);
@@ -237,15 +257,8 @@ void extractField(FormField * field, YAML::Emitter & out)
 		extract(buttonField, out);
 		return;
 	}
-	{
-		out << YAML::BeginMap;
-		for (unsigned i = 0; i < FormFieldHack::getNumChildrenFields(field); i++)
-		{
-			FormField *subfield = FormFieldHack::getChildField(field, i);
-			extractField(subfield, out);
-		}
-		out << YAML::EndMap;
-	}
+	error("Unreconigzed type extracting '" +
+		pdftext_2_utf8(field->getFullyQualifiedName()) + "'" );
 }
 
 
@@ -360,6 +373,17 @@ int fillField(FormField * field, const YAML::Node & node)
 
 	const YAML::Node & theNode = node[fieldName];
 
+	unsigned nChildren = FormFieldHack::getNumChildrenFields(field);
+	if (nChildren)
+	{
+		for (unsigned i = 0; i < nChildren; i++)
+		{
+			FormField *subfield = FormFieldHack::getChildField(field, i);
+			int error = fillField(subfield, theNode);
+			if (error) return error;
+		}
+		return 0;
+	}
 	if (type == formText)
 	{
 		FormFieldText * textField = dynamic_cast<FormFieldText*>(field);
@@ -374,15 +398,6 @@ int fillField(FormField * field, const YAML::Node & node)
 	{
 		FormFieldButton * buttonField = dynamic_cast<FormFieldButton*>(field);
 		return fill(buttonField, theNode);
-	}
-	{
-		for (unsigned i = 0; i < FormFieldHack::getNumChildrenFields(field); i++)
-		{
-			FormField *subfield = FormFieldHack::getChildField(field, i);
-			int error = fillField(subfield, theNode);
-			if (error) return error;
-		}
-		return 0;
 	}
 	return error("Unreconigzed type filling '" +
 		pdftext_2_utf8(field->getFullyQualifiedName()) + "'");
