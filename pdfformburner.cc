@@ -130,13 +130,14 @@ class FormFieldHack : public FormField
 public:
 	static int getNumChildrenFields(FormField * field)
 	{
-		FormFieldHack * wrapper  = static_cast<FormFieldHack*>(field);
-		return wrapper->numChildren;
+		FormFieldHack * hack = static_cast<FormFieldHack*>(field);
+		if (hack->terminal) return 0; // numChildren are widgets
+		return hack->numChildren;
 	}
 	static FormField * getChildField(FormField * field, int i)
 	{
-		FormFieldHack * wrapper  = static_cast<FormFieldHack*>(field);
-		return wrapper->children[i];
+		FormFieldHack * hack = static_cast<FormFieldHack*>(field);
+		return hack->children[i];
 	}
 };
 
