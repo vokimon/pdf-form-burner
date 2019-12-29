@@ -60,10 +60,10 @@ int error(const std::string & message, int code=-1)
 	return code;
 }
 
-std::string pdftext_2_utf8(GooString *s)
+std::string pdftext_2_utf8(const GooString *s)
 {
 	if (!s) return "";
-	if (!s->getCString()) return "";
+	if (!s->c_str()) return "";
 
 	std::string output;
 	Unicode *u;
@@ -143,19 +143,20 @@ public:
 
 int extract(FormFieldText * field, YAML::Emitter & out )
 {
-	GooString * content = field->getContent();
+	const GooString * content = field->getContent();
 	if (field->isMultiline())
 		out << YAML::Literal;
 	out << YAML::Value << pdftext_2_utf8(content);
 	if (showTypes)
 		out << YAML::Comment(typeStrings[field->getType()]);
+	return 0;
 }
 
 
 // TODO: Test
 int extractMultiple(FormFieldChoice * field, YAML::Emitter & out)
 {
-	GooString * content = field->getSelectedChoice();
+	const GooString * content = field->getSelectedChoice();
 	// TODO: content can be NULL
 	out << YAML::BeginSeq;
 	for (unsigned i = 0; i<field->getNumChoices(); i++)
@@ -172,11 +173,12 @@ int extractMultiple(FormFieldChoice * field, YAML::Emitter & out)
 			os << (i?", ":"") << pdftext_2_utf8(field->getChoice(i));
 		out << YAML::Comment(os.str());
 	}
+	return 0;
 }
 
 int extractSingle(FormFieldChoice * field, YAML::Emitter & out)
 {
-	GooString * content = field->getSelectedChoice();
+	const GooString * content = field->getSelectedChoice();
 	// TODO: content can be NULL
 	out << YAML::Value << pdftext_2_utf8(content);
 	if (showTypes)
@@ -272,7 +274,7 @@ int fillMultiple(FormFieldChoice * field, const YAML::Node & node)
 
 	for (unsigned i = 0; i<field->getNumChoices(); i++)
 	{
-		GooString * choiceText = field->getChoice(i);
+		const GooString * choiceText = field->getChoice(i);
 		std::string value = pdftext_2_utf8(choiceText);
 		if (values.find(value)==values.end()) continue;
 		field->select(i);
@@ -293,7 +295,7 @@ int fillSingle(FormFieldChoice * field, const YAML::Node & node)
 	std::string value = node.as<std::string>();
 	for (unsigned i = 0; i<field->getNumChoices(); i++)
 	{
-		GooString * choiceText = field->getChoice(i);
+		const GooString * choiceText = field->getChoice(i);
 		if (pdftext_2_utf8(choiceText)!=value) continue;
 		field->select(i);
 		return 0;
@@ -303,7 +305,7 @@ int fillSingle(FormFieldChoice * field, const YAML::Node & node)
 			pdftext_2_utf8(field->getFullyQualifiedName())+" '"+value+"'");
 
 	// Editable choice field can have arbitrary values
-	GooString * content = utf8_2_pdftext(value);
+	const GooString * content = utf8_2_pdftext(value);
 	field->setEditChoice(content);
 	if (content) delete content;
 	return 0;
@@ -323,7 +325,7 @@ int fill(FormFieldText * field, const YAML::Node & node)
 		return error("String required for field "+
 			pdftext_2_utf8(field->getFullyQualifiedName()));
 	std::string value = node.as<std::string>();
-	GooString * content = utf8_2_pdftext(value);
+	const GooString * content = utf8_2_pdftext(value);
 	field->setContentCopy(content);
 	if (content) delete content;
 	return 0;
