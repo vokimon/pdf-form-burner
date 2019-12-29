@@ -190,6 +190,7 @@ int extractSingle(FormFieldChoice * field, YAML::Emitter & out)
 			os << (i?", ":"") << pdftext_2_utf8(field->getChoice(i));
 		out << YAML::Comment(os.str());
 	}
+	return 0;
 }
 
 int extract(FormFieldChoice * field, YAML::Emitter & out)
@@ -209,6 +210,7 @@ int extract(FormFieldButton * field, YAML::Emitter & out)
 	if (showTypes)
 		out << YAML::Comment(buttonTypeStrings[type]);
 	// TODO: Add to the comment available onValues in childs
+	return 0;
 }
 
 void extractField(FormField * field, YAML::Emitter & out)
@@ -315,9 +317,9 @@ int fillSingle(FormFieldChoice * field, const YAML::Node & node)
 int fill(FormFieldChoice * field, const YAML::Node & node)
 {
 	if (field->isMultiSelect())
-		fillMultiple(field, node);
-	else
-		fillSingle(field, node);
+		return fillMultiple(field, node);
+
+	return fillSingle(field, node);
 }
 
 int fill(FormFieldText * field, const YAML::Node & node)
