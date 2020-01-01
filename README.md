@@ -57,7 +57,7 @@ the only encoding you have to deal with is [UTF-8].
 So in Debian and Ubuntu:
 
 ```bash
-$ sudo apt-get install libyaml-cpp-dev libpoppler-dev scons libboost-dev
+$ sudo apt install libyaml-cpp-dev libpoppler-dev scons libboost-dev
 ```
 
 ## Install
