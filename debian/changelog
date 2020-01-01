@@ -1,3 +1,10 @@
+pdfformburner (1.3-1) eoan; urgency=medium
+
+  * New upstream release
+  * rebuild for new libpoppler libs
+
+ -- vokimon <vokimon@shoebox.>  Thu, 18 Jan 2018 23:04:00 +0100
+
 pdfformburner (1.2-2) artful; urgency=medium
 
   * rebuild for libpoppler libs
