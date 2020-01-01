@@ -60,10 +60,10 @@ int error(const std::string & message, int code=-1)
 	return code;
 }
 
-std::string pdftext_2_utf8(GooString *s)
+std::string pdftext_2_utf8(const GooString *s)
 {
 	if (!s) return "";
-	if (!s->getCString()) return "";
+	if (!s->c_str()) return "";
 
 	std::string output;
 	Unicode *u;
@@ -130,32 +130,34 @@ class FormFieldHack : public FormField
 public:
 	static int getNumChildrenFields(FormField * field)
 	{
-		FormFieldHack * wrapper  = static_cast<FormFieldHack*>(field);
-		return wrapper->numChildren;
+		FormFieldHack * hack = static_cast<FormFieldHack*>(field);
+		if (hack->terminal) return 0; // numChildren are widgets
+		return hack->numChildren;
 	}
 	static FormField * getChildField(FormField * field, int i)
 	{
-		FormFieldHack * wrapper  = static_cast<FormFieldHack*>(field);
-		return wrapper->children[i];
+		FormFieldHack * hack = static_cast<FormFieldHack*>(field);
+		return hack->children[i];
 	}
 };
 
 
 int extract(FormFieldText * field, YAML::Emitter & out )
 {
-	GooString * content = field->getContent();
+	const GooString * content = field->getContent();
 	if (field->isMultiline())
 		out << YAML::Literal;
 	out << YAML::Value << pdftext_2_utf8(content);
 	if (showTypes)
 		out << YAML::Comment(typeStrings[field->getType()]);
+	return 0;
 }
 
 
 // TODO: Test
 int extractMultiple(FormFieldChoice * field, YAML::Emitter & out)
 {
-	GooString * content = field->getSelectedChoice();
+	const GooString * content = field->getSelectedChoice();
 	// TODO: content can be NULL
 	out << YAML::BeginSeq;
 	for (unsigned i = 0; i<field->getNumChoices(); i++)
@@ -172,11 +174,12 @@ int extractMultiple(FormFieldChoice * field, YAML::Emitter & out)
 			os << (i?", ":"") << pdftext_2_utf8(field->getChoice(i));
 		out << YAML::Comment(os.str());
 	}
+	return 0;
 }
 
 int extractSingle(FormFieldChoice * field, YAML::Emitter & out)
 {
-	GooString * content = field->getSelectedChoice();
+	const GooString * content = field->getSelectedChoice();
 	// TODO: content can be NULL
 	out << YAML::Value << pdftext_2_utf8(content);
 	if (showTypes)
@@ -187,6 +190,7 @@ int extractSingle(FormFieldChoice * field, YAML::Emitter & out)
 			os << (i?", ":"") << pdftext_2_utf8(field->getChoice(i));
 		out << YAML::Comment(os.str());
 	}
+	return 0;
 }
 
 int extract(FormFieldChoice * field, YAML::Emitter & out)
@@ -206,6 +210,7 @@ int extract(FormFieldButton * field, YAML::Emitter & out)
 	if (showTypes)
 		out << YAML::Comment(buttonTypeStrings[type]);
 	// TODO: Add to the comment available onValues in childs
+	return 0;
 }
 
 void extractField(FormField * field, YAML::Emitter & out)
@@ -213,7 +218,27 @@ void extractField(FormField * field, YAML::Emitter & out)
 	FormFieldType type = field->getType();
 	std::string fieldName = pdftext_2_utf8(
 		field->getPartialName());
+	std::string alternateName = pdftext_2_utf8(
+		field->getAlternateUiName());
+	std::string mappingName = pdftext_2_utf8(
+		field->getMappingName());
 	out << YAML::Key << fieldName;
+	if (!mappingName.empty() && mappingName!=fieldName)
+		out << YAML::Comment(mappingName);
+	if (!alternateName.empty() && alternateName!=fieldName)
+		out << YAML::Comment(alternateName);
+	int nChildren = FormFieldHack::getNumChildrenFields(field);
+	if (nChildren)
+	{
+		out << YAML::BeginMap;
+		for (unsigned i = 0; i < nChildren; i++)
+		{
+			FormField *subfield = FormFieldHack::getChildField(field, i);
+			extractField(subfield, out);
+		}
+		out << YAML::EndMap;
+		return;
+	}
 	if (type == formText)
 	{
 		FormFieldText * textField = dynamic_cast<FormFieldText*>(field);
@@ -232,15 +257,8 @@ void extractField(FormField * field, YAML::Emitter & out)
 		extract(buttonField, out);
 		return;
 	}
-	{
-		out << YAML::BeginMap;
-		for (unsigned i = 0; i < FormFieldHack::getNumChildrenFields(field); i++)
-		{
-			FormField *subfield = FormFieldHack::getChildField(field, i);
-			extractField(subfield, out);
-		}
-		out << YAML::EndMap;
-	}
+	error("Unreconigzed type extracting '" +
+		pdftext_2_utf8(field->getFullyQualifiedName()) + "'" );
 }
 
 
@@ -272,7 +290,7 @@ int fillMultiple(FormFieldChoice * field, const YAML::Node & node)
 
 	for (unsigned i = 0; i<field->getNumChoices(); i++)
 	{
-		GooString * choiceText = field->getChoice(i);
+		const GooString * choiceText = field->getChoice(i);
 		std::string value = pdftext_2_utf8(choiceText);
 		if (values.find(value)==values.end()) continue;
 		field->select(i);
@@ -293,7 +311,7 @@ int fillSingle(FormFieldChoice * field, const YAML::Node & node)
 	std::string value = node.as<std::string>();
 	for (unsigned i = 0; i<field->getNumChoices(); i++)
 	{
-		GooString * choiceText = field->getChoice(i);
+		const GooString * choiceText = field->getChoice(i);
 		if (pdftext_2_utf8(choiceText)!=value) continue;
 		field->select(i);
 		return 0;
@@ -303,7 +321,7 @@ int fillSingle(FormFieldChoice * field, const YAML::Node & node)
 			pdftext_2_utf8(field->getFullyQualifiedName())+" '"+value+"'");
 
 	// Editable choice field can have arbitrary values
-	GooString * content = utf8_2_pdftext(value);
+	const GooString * content = utf8_2_pdftext(value);
 	field->setEditChoice(content);
 	if (content) delete content;
 	return 0;
@@ -312,9 +330,9 @@ int fillSingle(FormFieldChoice * field, const YAML::Node & node)
 int fill(FormFieldChoice * field, const YAML::Node & node)
 {
 	if (field->isMultiSelect())
-		fillMultiple(field, node);
-	else
-		fillSingle(field, node);
+		return fillMultiple(field, node);
+
+	return fillSingle(field, node);
 }
 
 int fill(FormFieldText * field, const YAML::Node & node)
@@ -323,7 +341,7 @@ int fill(FormFieldText * field, const YAML::Node & node)
 		return error("String required for field "+
 			pdftext_2_utf8(field->getFullyQualifiedName()));
 	std::string value = node.as<std::string>();
-	GooString * content = utf8_2_pdftext(value);
+	const GooString * content = utf8_2_pdftext(value);
 	field->setContentCopy(content);
 	if (content) delete content;
 	return 0;
@@ -345,47 +363,44 @@ int fill(FormFieldButton * field, const YAML::Node & node)
 	return 0;
 }
 
-void fillField(FormField * field, const YAML::Node & node)
+int fillField(FormField * field, const YAML::Node & node)
 {
 	FormFieldType type = field->getType();
 	std::string fieldName = pdftext_2_utf8(
 		field->getPartialName());
 	if (not node[fieldName])
-	{
-		std::cerr
-			<< "\033[31;1m"
-			<< "Field '" << fieldName
-			<< "' missing at the yaml"
-			<< "\033[0m"
-			<< std::endl;
-		return;
-	}
+		return error("Missing yaml field '" + fieldName + "'");
 
+	const YAML::Node & theNode = node[fieldName];
+
+	unsigned nChildren = FormFieldHack::getNumChildrenFields(field);
+	if (nChildren)
+	{
+		for (unsigned i = 0; i < nChildren; i++)
+		{
+			FormField *subfield = FormFieldHack::getChildField(field, i);
+			int error = fillField(subfield, theNode);
+			if (error) return error;
+		}
+		return 0;
+	}
 	if (type == formText)
 	{
 		FormFieldText * textField = dynamic_cast<FormFieldText*>(field);
-		fill(textField, node[fieldName]);
-		return;
+		return fill(textField, theNode);
 	}
 	if (type == formChoice)
 	{
 		FormFieldChoice * choiceField = dynamic_cast<FormFieldChoice*>(field);
-		fill(choiceField, node[fieldName]);
-		return;
+		return fill(choiceField, theNode);
 	}
 	if (type == formButton)
 	{
 		FormFieldButton * buttonField = dynamic_cast<FormFieldButton*>(field);
-		fill(buttonField, node[fieldName]);
-		return;
+		return fill(buttonField, theNode);
 	}
-	{
-		for (unsigned i = 0; i < FormFieldHack::getNumChildrenFields(field); i++)
-		{
-			FormField *subfield = FormFieldHack::getChildField(field, i);
-			fillField(subfield, node[fieldName]);
-		}
-	}
+	return error("Unreconigzed type filling '" +
+		pdftext_2_utf8(field->getFullyQualifiedName()) + "'");
 }
 
 int fillPdfWithYaml(Form * form, const YAML::Node & node)
@@ -394,7 +409,8 @@ int fillPdfWithYaml(Form * form, const YAML::Node & node)
 	for (unsigned i = 0; i < form->getNumFields(); i++)
 	{
 		FormField *field = form->getRootField(i);
-		fillField(field, node);
+		int error = fillField(field, node);
+		if (error) return error;
 	}
 	return 0;
 }
