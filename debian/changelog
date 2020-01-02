@@ -1,6 +1,7 @@
 pdfformburner (1.3-1) eoan; urgency=medium
 
   * New upstream release
+  * Switch to dpkg-source 3.0 (quilt) format
   * rebuild for new libpoppler libs
 
  -- David García Garzón <vokimon@canvoki.net>  Wed, 01 Jan 2020 18:04:00 +0100
