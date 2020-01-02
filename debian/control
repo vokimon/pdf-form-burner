@@ -2,8 +2,8 @@ Source: pdfformburner
 Section: text
 Priority: optional
 Maintainer: David García Garzón <david.garcia@upf.edu>
-Build-Depends: debhelper (>= 9.0.0), scons, libyaml-cpp-dev, libpoppler-dev (>=0.80), libboost-dev
-Standards-Version: 3.9.5
+Build-Depends: debhelper (>= 9.0.0), scons, libyaml-cpp-dev (>=0.6.0), libpoppler-dev (>=0.80)
+Standards-Version: 4.4.0
 Homepage: https://github.com/vokimon/pdf-form-burner
 
 Package: pdfformburner
