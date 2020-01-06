@@ -17,10 +17,23 @@ env.Append(CCFLAGS=[
 	'-std=c++14',
 	])
 
+
+env['HELP2MAN'] = env.WhereIs('help2man', os.environ['PATH'])
+Help2Man = env.Append(BUILDERS={'Help2Man': Builder(
+	action='$HELP2MAN ./$SOURCE > $TARGET',
+	suffix = '.1',
+	src_suffix = '',
+)})
+
 program_legacy = env.Program('pdfformburner_legacy', Glob("pdfformburner_legacy.cc"))
 program = env.Program('pdfformburner', Glob("pdfformburner_qt.cc"))
+manpage = env.Help2Man(source=program)
 
-install = env.Install(os.path.join(env['prefix'],'bin'), program)
+install = [
+	env.Install(os.path.join(env['prefix'],'bin'), program),
+	env.Install(os.path.join(env['prefix'],'man/man1'), manpage),
+	]
 
 env.Alias('install', install)
+env.Alias('manpage', manpage)
 
