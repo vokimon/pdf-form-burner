@@ -10,7 +10,8 @@ options.Save('.scons.options',env)
 Help(options.GenerateHelpText(env))
 env.SConsignFile() # Single signature file
 
-env.ParseConfig('pkg-config --libs --cflags poppler yaml-cpp poppler-qt5 Qt5Core')
+env.ParseConfig('pkg-config --libs --cflags poppler yaml-cpp poppler-qt5 Qt5Core ')
+env.Append(LIBS=['fmt'])
 env.Append(CCFLAGS=[
 	'-g',
 	'-fPIC',

@@ -7,9 +7,49 @@
 #include <memory>
 #include <fstream>
 #include <yaml-cpp/yaml.h>
+#include <fmt/core.h>
+#include <fmt/ostream.h>
 
+static std::ostream & operator<< (std::ostream & os, const QString & string)
+{
+	return os << string.toStdString();
+}
+YAML::Emitter& operator << (YAML::Emitter& out, const QString & string)
+{
+	return out << string.toStdString();
+}
 
+template<typename ...Args>
+static void colorize(std::ostream & os, const std::string color, const std::string prefix, const std::string & message, Args ... args) { 
+	os
+		<< "\033[" << color << "m" << prefix
+		<< fmt::format(message, args...)
+		<< "\033[0m"
+		<< std::endl;
+}
 
+template<typename ...Args>
+static void error(const std::string & message, Args ... args) {
+	colorize(std::cerr, "31;1", "ERROR: ", message, args...);
+}
+template<typename ...Args>
+static bool fail(const std::string & message, Args ... args) {
+	error(message, args...);
+	std::exit(-1);
+	return false;
+}
+template<typename ...Args>
+static void warn(const std::string & message, Args ... args) {
+	colorize(std::cerr, "33", "Warning: ", message, args...);
+}
+template<typename ...Args>
+static void step(const std::string & message, Args ... args) {
+	colorize(std::cerr, "34", "== ", message, args...);
+}
+template<typename ...Args>
+static void stage(const std::string & message, Args ... args) {
+	colorize(std::cerr, "34;1", "== ", message, args...);
+}
 
 #define BEGIN_ENUM(NS, TYPE) \
 std::ostream & operator << (std::ostream & os, NS::TYPE value) {\
@@ -20,6 +60,7 @@ std::ostream & operator << (std::ostream & os, NS::TYPE value) {\
 	default: return os << "Invalid"; \
 	}\
 }
+
 
 BEGIN_ENUM(Poppler::FormField, FormType)
 	ENUM_VALUE(FormButton)
@@ -55,15 +96,6 @@ QString translate(const char * text) {
 	return app.translate("main", text);
 }
 
-static std::ostream & operator<< (std::ostream & os, const QString & string)
-{
-	return os << string.toStdString();
-}
-YAML::Emitter& operator << (YAML::Emitter& out, const QString & string)
-{
-	return out << string.toStdString();
-}
-
 
 void dump(Poppler::FormFieldButton * field, YAML::Emitter & out) {
 	switch (field->buttonType()) {
@@ -73,22 +105,22 @@ void dump(Poppler::FormFieldButton * field, YAML::Emitter & out) {
 			return;
 		case Poppler::FormFieldButton::Push:
 			out << YAML::Null;
-			std::cerr
-				<< "Push button ignored " << field->fullyQualifiedName() << std::endl;
+			warn("Push button ignored '{}'",
+				field->fullyQualifiedName());
 	}
 }
 void dump(Poppler::FormFieldText * field, YAML::Emitter & out) {
 	switch (field->textType()) {
 		case Poppler::FormFieldText::FileSelect:
-			std::cerr
-				<< "Warning: File select not fully supported, managed as simple text"
-				<< std::endl;
-			out << YAML::Value << field->text();
+			warn("File select not fully supported, managed as simple text, field {}",
+				field->fullyQualifiedName());
+			out << field->text();
 			return;
 		case Poppler::FormFieldText::Multiline:
-			out << YAML::Literal;
+			out << YAML::Literal << field->text();
+			return;
 		case Poppler::FormFieldText::Normal:
-			out << YAML::Value << field->text();
+			out << field->text();
 			return;
 	}
 }
@@ -99,21 +131,21 @@ void dump(Poppler::FormFieldChoice * field, YAML::Emitter & out) {
 	if (field->multiSelect()) {
 		out << YAML::BeginSeq;
 		for (auto i: currentChoices) {
-			out << YAML::Value << choices[i];
+			out << choices[i];
 		}
 		out << YAML::EndSeq;
 	}
 	else if (field->isEditable() and not field->editChoice().isNull()) {
-		out << YAML::Value << field->editChoice();
+		out << field->editChoice();
 	}
 	else {
-		out << YAML::Value
-			<< (currentChoices.empty()?"":choices[currentChoices.first()]);
+		out << (currentChoices.empty()?"":choices[currentChoices.first()]);
 	}
 	out << YAML::Comment(translate("%1 values: %2")
-		.arg(field->isEditable()?"Suggested":"Allowed")
-		.arg(choices.join(", "))
-		.toStdString());
+		.arg(field->isEditable()?translate("Suggested"):translate("Allowed"))
+		.arg(choices.join(QStringLiteral(", ")))
+		.toStdString()
+		);
 }
 
 void dump(Poppler::FormFieldSignature * field, YAML::Emitter & out) {
@@ -146,6 +178,9 @@ public:
 	void add(const QString & fullName, Poppler::FormField * field) {
 		int dotPos = fullName.indexOf('.');
 		if (dotPos == -1) {
+			if (_children.contains(fullName))
+				warn("Overwriting existing field '{}', '{}'",
+					fullName, field->name());
 			_children[fullName] = FieldTree(field);
 			return;
 		}
@@ -196,17 +231,15 @@ public:
 
 
 	void fill(Poppler::FormField * field, const YAML::Node & node) {
-		std::cerr << "Field not supported"
-			<< field->fullyQualifiedName() << " "
-			<< field->type() << " " 
-			<< std::endl;
+		error("Unsupported field {} of type '{}'",
+			field->fullyQualifiedName(),
+			field->type());
 	}
 
 	void fill(Poppler::FormFieldText * field, const YAML::Node & node) {
 		if (not node.IsScalar()) {
-			std::cerr << "String required for field "
-				<< field->fullyQualifiedName()
-				<< std::endl;
+			error("String required for field '{}'",
+				field->fullyQualifiedName());
 		}
 		field->setText(node.as<std::string>().c_str());
 	}
@@ -217,9 +250,8 @@ public:
 			case Poppler::FormFieldButton::Radio:
 			{
 				if (not node.IsScalar()) {
-					std::cerr << "Boolean value required for field "
-						<< field->fullyQualifiedName()
-						<< std::endl;
+					error("Boolean value required for field '{}'",
+						field->fullyQualifiedName());
 					return;
 				}
 				bool value = node.as<bool>();
@@ -227,8 +259,7 @@ public:
 				return;
 			}
 			case Poppler::FormFieldButton::Push:
-				std::cerr
-					<< "Push button ignored " << field->fullyQualifiedName() << std::endl;
+				warn("Push button ignored '{}'", field->fullyQualifiedName());
 		}
 	}
 
@@ -236,25 +267,22 @@ public:
 		auto choices = field->choices();
 		if (field->multiSelect()) {
 			if (not node.IsSequence()) {
-				std::cerr << "Sequence required for field "
-					<< field->fullyQualifiedName()
-					<< std::endl;
+				error("Sequence required for field '{}'",
+					field->fullyQualifiedName());
 			}
 			QList<int> selection;
 			for (auto subnode: node) {
 				if (not subnode.IsScalar()) {
-					std::cerr << "Sequence of scalars values required for field "
-						<< field->fullyQualifiedName()
-						<< std::endl;
+					error("Sequence of scalars values required for field '{}'",
+						field->fullyQualifiedName());
 					return;
 				}
 				std::string value = subnode.as<std::string>();
 				int selected = choices.indexOf(value.c_str());
 				if (selected==-1) {
-					std::cerr << "Illegal value '" << value
-						<< "' for field '" << field->fullyQualifiedName()
-						<< "' try with " << choices.join(", ")
-						<< std::endl;
+					error("Illegal value '{}' for field '{}' try with {}",
+						value, field->fullyQualifiedName(),
+						choices.join(", "));
 					return;
 				}
 				selection.append(selected);
@@ -263,9 +291,8 @@ public:
 			return;
 		}
 		if (not node.IsScalar()) {
-			std::cerr << "Scalar value required for field "
-				<< field->fullyQualifiedName()
-				<< std::endl;
+			error("Scalar value required for field '{}'",
+				field->fullyQualifiedName());
 			return;
 		}
 		std::string value = node.as<std::string>();
@@ -276,10 +303,9 @@ public:
 			return;
 		}
 		if (selected==-1) {
-			std::cerr << "Illegal value '" << value
-				<< "' for field '" << field->fullyQualifiedName()
-				<< "' try with " << choices.join(", ")
-				<< std::endl;
+			error("Illegal value '{}' for field '{}' try with {}",
+				value, field->fullyQualifiedName(),
+				choices.join(", "));
 			return;
 		}
 		QList<int> selection;
@@ -360,16 +386,13 @@ int main(int argc, char**argv)
 	}
 	auto inputpdf = arguments[0];
 
+	stage("Loading {}", inputpdf);
 	auto document = std::unique_ptr<Poppler::Document>(Poppler::Document::load(inputpdf));
-	if (!document) {
-		std::cerr << "Error: Unable to open the document" << std::endl;
-		return -1;
-	}
-	if (document->isLocked()) {
-		std::cerr << "Error: Locked pdf" << std::endl;
-		return -1;
-	}
 
+	document or fail("Unable to open the document");
+	document->isLocked() and fail("Locked pdf");
+
+	stage("Looking for form fields");
 	FieldTree fieldTree;
 	for (unsigned page=0; true; page++) {
 		Poppler::Page* pdfPage = document->page(page);  // Document starts at page 0
