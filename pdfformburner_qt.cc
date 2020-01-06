@@ -202,7 +202,26 @@ public:
 		}
 		field->setText(node.as<std::string>().c_str());
 	}
-
+	void fill(Poppler::FormFieldButton * field, const YAML::Node & node) {
+		if (not node.IsScalar()) {
+			std::cerr << "Boolean value required for field "
+				<< field->fullyQualifiedName().toStdString()
+				<< std::endl;
+			return;
+		}
+		switch (field->buttonType()) {
+			case Poppler::FormFieldButton::CheckBox:
+			case Poppler::FormFieldButton::Radio:
+			{
+				bool value = node.as<bool>();
+				field->setState(value);
+				return;
+			}
+			case Poppler::FormFieldButton::Push:
+				std::cerr
+					<< "Push button ignored" << std::endl;
+		}
+	}
 
 	void fillChildren(const YAML::Node & node) {
 		if (_children.empty()) return;
