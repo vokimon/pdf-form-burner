@@ -55,6 +55,16 @@ QString translate(const char * text) {
 	return app.translate("main", text);
 }
 
+static std::ostream & operator<< (std::ostream & os, const QString & string)
+{
+	return os << string.toStdString();
+}
+YAML::Emitter& operator << (YAML::Emitter& out, const QString & string)
+{
+	return out << string.toStdString();
+}
+
+
 void dump(Poppler::FormFieldButton * field, YAML::Emitter & out) {
 	switch (field->buttonType()) {
 		case Poppler::FormFieldButton::CheckBox:
@@ -64,7 +74,7 @@ void dump(Poppler::FormFieldButton * field, YAML::Emitter & out) {
 		case Poppler::FormFieldButton::Push:
 			out << YAML::Null;
 			std::cerr
-				<< "Push button ignored " << field->fullyQualifiedName().toStdString() << std::endl;
+				<< "Push button ignored " << field->fullyQualifiedName() << std::endl;
 	}
 }
 void dump(Poppler::FormFieldText * field, YAML::Emitter & out) {
@@ -73,12 +83,12 @@ void dump(Poppler::FormFieldText * field, YAML::Emitter & out) {
 			std::cerr
 				<< "Warning: File select not fully supported, managed as simple text"
 				<< std::endl;
-			out << YAML::Value << field->text().toStdString();
+			out << YAML::Value << field->text();
 			return;
 		case Poppler::FormFieldText::Multiline:
 			out << YAML::Literal;
 		case Poppler::FormFieldText::Normal:
-			out << YAML::Value << field->text().toStdString();
+			out << YAML::Value << field->text();
 			return;
 	}
 }
@@ -89,16 +99,16 @@ void dump(Poppler::FormFieldChoice * field, YAML::Emitter & out) {
 	if (field->multiSelect()) {
 		out << YAML::BeginSeq;
 		for (auto i: currentChoices) {
-			out << YAML::Value << choices[i].toStdString();
+			out << YAML::Value << choices[i];
 		}
 		out << YAML::EndSeq;
 	}
 	else if (field->isEditable() and not field->editChoice().isNull()) {
-		out << YAML::Value << field->editChoice().toStdString();
+		out << YAML::Value << field->editChoice();
 	}
 	else {
 		out << YAML::Value
-			<< (currentChoices.empty()?"":choices[currentChoices.first()].toStdString());
+			<< (currentChoices.empty()?"":choices[currentChoices.first()]);
 	}
 	out << YAML::Comment(translate("%1 values: %2")
 		.arg(field->isEditable()?"Suggested":"Allowed")
@@ -114,15 +124,15 @@ void dump(Poppler::FormFieldSignature * field, YAML::Emitter & out) {
 		<< YAML::Key << "status"
 		<< YAML::Value << info.signatureStatus()
 		<< YAML::Key << "signer"
-		<< YAML::Value << info.signerName().toStdString()
+		<< YAML::Value << info.signerName()
 		<< YAML::Key << "time"
 		<< YAML::Value << QDateTime::fromMSecsSinceEpoch(
 				info.signingTime(), Qt::UTC)
-			.toString(Qt::ISODate).toStdString()
+			.toString(Qt::ISODate)
 		<< YAML::Key << "location"
-		<< YAML::Value << info.location().toStdString()
+		<< YAML::Value << info.location()
 		<< YAML::Key << "reason"
-		<< YAML::Value << info.reason().toStdString()
+		<< YAML::Value << info.reason()
 		<< YAML::Key << "scope"
 		<< YAML::Value << (info.signsTotalDocument()?"Total":"Partial")
 	;
@@ -155,7 +165,7 @@ public:
 	void extractChildren(YAML::Emitter & out) {
 		out << YAML::BeginMap;
 		for (auto key : _children.keys()) {
-			out << YAML::Key << key.toStdString() << YAML::Value;
+			out << YAML::Key << key << YAML::Value;
 			_children[key].extract(out);
 		}
 		out << YAML::EndMap;
@@ -187,7 +197,7 @@ public:
 
 	void fill(Poppler::FormField * field, const YAML::Node & node) {
 		std::cerr << "Field not supported"
-			<< field->fullyQualifiedName().toStdString() << " "
+			<< field->fullyQualifiedName() << " "
 			<< field->type() << " " 
 			<< std::endl;
 	}
@@ -195,7 +205,7 @@ public:
 	void fill(Poppler::FormFieldText * field, const YAML::Node & node) {
 		if (not node.IsScalar()) {
 			std::cerr << "String required for field "
-				<< field->fullyQualifiedName().toStdString()
+				<< field->fullyQualifiedName()
 				<< std::endl;
 		}
 		field->setText(node.as<std::string>().c_str());
@@ -208,7 +218,7 @@ public:
 			{
 				if (not node.IsScalar()) {
 					std::cerr << "Boolean value required for field "
-						<< field->fullyQualifiedName().toStdString()
+						<< field->fullyQualifiedName()
 						<< std::endl;
 					return;
 				}
@@ -218,7 +228,7 @@ public:
 			}
 			case Poppler::FormFieldButton::Push:
 				std::cerr
-					<< "Push button ignored " << field->fullyQualifiedName().toStdString() << std::endl;
+					<< "Push button ignored " << field->fullyQualifiedName() << std::endl;
 		}
 	}
 
@@ -227,14 +237,14 @@ public:
 		if (field->multiSelect()) {
 			if (not node.IsSequence()) {
 				std::cerr << "Sequence required for field "
-					<< field->fullyQualifiedName().toStdString()
+					<< field->fullyQualifiedName()
 					<< std::endl;
 			}
 			QList<int> selection;
 			for (auto subnode: node) {
 				if (not subnode.IsScalar()) {
 					std::cerr << "Sequence of scalars values required for field "
-						<< field->fullyQualifiedName().toStdString()
+						<< field->fullyQualifiedName()
 						<< std::endl;
 					return;
 				}
@@ -242,8 +252,8 @@ public:
 				int selected = choices.indexOf(value.c_str());
 				if (selected==-1) {
 					std::cerr << "Illegal value '" << value
-						<< "' for field '" << field->fullyQualifiedName().toStdString()
-						<< "' try with " << choices.join(", ").toStdString()
+						<< "' for field '" << field->fullyQualifiedName()
+						<< "' try with " << choices.join(", ")
 						<< std::endl;
 					return;
 				}
@@ -254,7 +264,7 @@ public:
 		}
 		if (not node.IsScalar()) {
 			std::cerr << "Scalar value required for field "
-				<< field->fullyQualifiedName().toStdString()
+				<< field->fullyQualifiedName()
 				<< std::endl;
 			return;
 		}
@@ -267,8 +277,8 @@ public:
 		}
 		if (selected==-1) {
 			std::cerr << "Illegal value '" << value
-				<< "' for field '" << field->fullyQualifiedName().toStdString()
-				<< "' try with " << choices.join(", ").toStdString()
+				<< "' for field '" << field->fullyQualifiedName()
+				<< "' try with " << choices.join(", ")
 				<< std::endl;
 			return;
 		}
