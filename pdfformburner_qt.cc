@@ -156,7 +156,7 @@ public:
 	void extractChildren(YAML::Emitter & out) {
 		out << YAML::BeginMap;
 		for (auto key : _children.keys()) {
-			out << YAML::Key << key.toStdString();
+			out << YAML::Key << key.toStdString() << YAML::Value;
 			_children[key].extract(out);
 		}
 		out << YAML::EndMap;
