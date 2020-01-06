@@ -93,7 +93,7 @@ void dump(Poppler::FormFieldChoice * field, YAML::Emitter & out) {
 		}
 		out << YAML::EndSeq;
 	}
-	else if (field->isEditable()) {
+	else if (field->isEditable() and not field->editChoice().isNull()) {
 		out << YAML::Value << field->editChoice().toStdString();
 	}
 	else {
