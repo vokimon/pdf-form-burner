@@ -17,8 +17,8 @@ env.Append(CCFLAGS=[
 	'-std=c++14',
 	])
 
-program = env.Program('pdfformburner', Glob("pdfformburner.cc"))
-program_qt = env.Program('pdfformburner_qt', Glob("pdfformburner_qt.cc"))
+program_legacy = env.Program('pdfformburner_legacy', Glob("pdfformburner_legacy.cc"))
+program = env.Program('pdfformburner', Glob("pdfformburner_qt.cc"))
 
 install = env.Install(os.path.join(env['prefix'],'bin'), program)
 
