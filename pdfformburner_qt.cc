@@ -62,9 +62,9 @@ void dump(Poppler::FormFieldButton * field, YAML::Emitter & out) {
 			out << bool(field->state());
 			return;
 		case Poppler::FormFieldButton::Push:
-			std::cerr
-				<< "Push button ignored" << std::endl;
 			out << YAML::Null;
+			std::cerr
+				<< "Push button ignored " << field->fullyQualifiedName().toStdString() << std::endl;
 	}
 }
 void dump(Poppler::FormFieldText * field, YAML::Emitter & out) {
@@ -204,23 +204,23 @@ public:
 	}
 
 	void fill(Poppler::FormFieldButton * field, const YAML::Node & node) {
-		if (not node.IsScalar()) {
-			std::cerr << "Boolean value required for field "
-				<< field->fullyQualifiedName().toStdString()
-				<< std::endl;
-			return;
-		}
 		switch (field->buttonType()) {
 			case Poppler::FormFieldButton::CheckBox:
 			case Poppler::FormFieldButton::Radio:
 			{
+				if (not node.IsScalar()) {
+					std::cerr << "Boolean value required for field "
+						<< field->fullyQualifiedName().toStdString()
+						<< std::endl;
+					return;
+				}
 				bool value = node.as<bool>();
 				field->setState(value);
 				return;
 			}
 			case Poppler::FormFieldButton::Push:
 				std::cerr
-					<< "Push button ignored" << std::endl;
+					<< "Push button ignored " << field->fullyQualifiedName().toStdString() << std::endl;
 		}
 	}
 
