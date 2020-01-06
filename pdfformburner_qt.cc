@@ -195,7 +195,6 @@ public:
 	}
 
 	void fill(Poppler::FormFieldText * field, const YAML::Node & node) {
-		std::cerr << "Text field" << std::endl;
 		if (not node.IsScalar()) {
 			std::cerr << "String required for field "
 				<< field->fullyQualifiedName().toStdString()
@@ -203,6 +202,7 @@ public:
 		}
 		field->setText(node.as<std::string>().c_str());
 	}
+
 	void fill(Poppler::FormFieldButton * field, const YAML::Node & node) {
 		if (not node.IsScalar()) {
 			std::cerr << "Boolean value required for field "
@@ -228,14 +228,12 @@ public:
 		if (_children.empty()) return;
 
 		for (auto key : _children.keys()) {
-			std::cerr << "Descending " << key.toStdString() << std::endl;
 			const YAML::Node & subnode = node[key.toStdString()];
 			_children[key].fill(subnode);
 		}
 	}
 	void fillField(const YAML::Node & node) {
 		if (!_field) return;
-		std::cerr << _field->fullyQualifiedName().toStdString() << std::endl;
 		switch (_field->type()) {
 			case Poppler::FormField::FormButton:
 				fill(dynamic_cast<Poppler::FormFieldButton*>(_field), node);
@@ -346,7 +344,6 @@ int main(int argc, char**argv)
 			}
 		}
 	}
-	std::cerr << "Exit" << std::endl;
 	return 0;
 }
 
