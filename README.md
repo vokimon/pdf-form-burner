@@ -42,17 +42,18 @@ the only encoding you have to deal with is [UTF-8].
 
 ## Limitations
 
-- Only suports the following field types:
-	- Text fields
-	- Non-editable single choice fields
-	- Check buttons
+Some fields are not fully supported yet:
+
+- RadioButtons are not working yet
+- FileSelects just fills and extracts the name, not the file content
+- Signature info is extracted and validated but not filled (Signing)
+- Actions related to fields (derived fields...) are not executed
 
 ## Dependencies
 
 - Scons, to build it
-- poppler, to access PDF elements
+- poppler-qt5, to access PDF elements
 - yaml-cpp, to load and dump YAML files
-- libboost-dev, a dependency of yaml-cpp
 
 So in Debian and Ubuntu:
 
@@ -78,6 +79,26 @@ gbp buildpackage --git-ignore-new --git-upstream-branch=master --git-debian-bran
 ```
 
 ## Changelog
+
+### 2.0 (2020-01-06)
+
+- New version based on poppler-qt5 instead of the private poppler api
+- Editable ChoiceFields working
+- Multiple ChoiceFields working
+- FileSelect TextFiels working, but just takes the name, not the contents
+- Exports signature field data
+- Fix: PushButtons broke yamls
+- Legacy version:
+	- Old version still available as `pdfformburner_legacy`
+	- Fix: PushButtons broke yamls
+- Regression tests added
+- Man page
+- Known bugs:
+  	- Some field ui names are exported as 'þÿ'
+	  because a bug in poppler-qt5 (a fix is to be released)
+	- RadioButtons still not working
+	- No filling for signatures
+	- Multilines add a new empty line each extract/fill cycle 
 
 ### 1.3
 
