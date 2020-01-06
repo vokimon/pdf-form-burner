@@ -330,17 +330,18 @@ int main(int argc, char**argv)
 	app.setApplicationName("pdfformburner");
 	app.setOrganizationName("KEEPerians UNLTD");
 	app.setOrganizationDomain("kkep.org");
-	app.setApplicationVersion("0.7");
+	app.setApplicationVersion("2.0");
 	QCommandLineParser parser;
-	parser.setApplicationDescription(translate("Extracts and fills PDF form data"));
+	parser.setApplicationDescription(translate(
+		"Extracts and fills PDF form data by means of YAML files"));
 	parser.addHelpOption();
 	parser.addVersionOption();
-	parser.addPositionalArgument("inputpdf",
-		translate("Input PDF"));
-	parser.addPositionalArgument("yaml",
-		translate("YAML file with the form data. Hyphen to use stdin for filling or stdout for extracting."));
-	parser.addPositionalArgument("outputpdf",
-		translate("Output PDF. If provided, activates the fill mode and uses the YAML as input"), "[outputpdf]");
+	parser.addPositionalArgument("input.pdf",
+		translate("PDF file to load"));
+	parser.addPositionalArgument("data.yaml",
+		translate("YAML file with the form data to write/read. Use a hyphen to use stdin/stdout"));
+	parser.addPositionalArgument("output.pdf",
+		translate("Filled PDF file. If provided, activates the fill mode and uses the YAML as input"), "[output.pdf]");
 	parser.process(app);
 	auto arguments = parser.positionalArguments();
 
