@@ -223,9 +223,62 @@ public:
 		}
 	}
 
-	void fillChildren(const YAML::Node & node) {
-		if (_children.empty()) return;
+	void fill(Poppler::FormFieldChoice * field, const YAML::Node & node) {
+		auto choices = field->choices();
+		if (field->multiSelect()) {
+			if (not node.IsSequence()) {
+				std::cerr << "Sequence required for field "
+					<< field->fullyQualifiedName().toStdString()
+					<< std::endl;
+			}
+			QList<int> selection;
+			for (auto subnode: node) {
+				if (not subnode.IsScalar()) {
+					std::cerr << "Sequence of scalars values required for field "
+						<< field->fullyQualifiedName().toStdString()
+						<< std::endl;
+					return;
+				}
+				std::string value = subnode.as<std::string>();
+				int selected = choices.indexOf(value.c_str());
+				if (selected==-1) {
+					std::cerr << "Illegal value '" << value
+						<< "' for field '" << field->fullyQualifiedName().toStdString()
+						<< "' try with " << choices.join(", ").toStdString()
+						<< std::endl;
+					return;
+				}
+				selection.append(selected);
+			}
+			field->setCurrentChoices(selection);
+			return;
+		}
+		if (not node.IsScalar()) {
+			std::cerr << "Scalar value required for field "
+				<< field->fullyQualifiedName().toStdString()
+				<< std::endl;
+			return;
+		}
+		std::string value = node.as<std::string>();
 
+		int selected = choices.indexOf(value.c_str());
+		if (selected==-1 and field->isEditable()) {
+			field->setEditChoice(value.c_str());
+			return;
+		}
+		if (selected==-1) {
+			std::cerr << "Illegal value '" << value
+				<< "' for field '" << field->fullyQualifiedName().toStdString()
+				<< "' try with " << choices.join(", ").toStdString()
+				<< std::endl;
+			return;
+		}
+		QList<int> selection;
+		selection.append(selected);
+		field->setCurrentChoices(selection);
+	}
+
+	void fillChildren(const YAML::Node & node) {
 		for (auto key : _children.keys()) {
 			const YAML::Node & subnode = node[key.toStdString()];
 			_children[key].fill(subnode);
