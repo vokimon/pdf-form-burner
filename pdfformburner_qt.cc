@@ -64,6 +64,7 @@ void dump(Poppler::FormFieldButton * field, YAML::Emitter & out) {
 		case Poppler::FormFieldButton::Push:
 			std::cerr
 				<< "Push button ignored" << std::endl;
+			out << YAML::Null;
 	}
 }
 void dump(Poppler::FormFieldText * field, YAML::Emitter & out) {
