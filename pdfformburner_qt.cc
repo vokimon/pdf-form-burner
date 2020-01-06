@@ -117,7 +117,7 @@ void dump(Poppler::FormFieldText * field, YAML::Emitter & out) {
 			out << field->text();
 			return;
 		case Poppler::FormFieldText::Multiline:
-			out << YAML::Literal << field->text();
+			out << YAML::Literal << field->text() << YAML::Newline;
 			return;
 		case Poppler::FormFieldText::Normal:
 			out << field->text();
