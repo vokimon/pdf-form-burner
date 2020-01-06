@@ -154,7 +154,6 @@ public:
 	}
 
 	void extractChildren(YAML::Emitter & out) {
-		if (_children.empty()) return;
 		out << YAML::BeginMap;
 		for (auto key : _children.keys()) {
 			out << YAML::Key << key.toStdString();
