@@ -100,10 +100,9 @@ void dump(Poppler::FormFieldChoice * field, YAML::Emitter & out) {
 		out << YAML::Value
 			<< (currentChoices.empty()?"":choices[currentChoices.first()].toStdString());
 	}
-	out << YAML::Comment(translate("Choose %1 %2%3")
-		.arg(field->multiSelect()?"some of ":"one of ")
+	out << YAML::Comment(translate("%1 values: %2")
+		.arg(field->isEditable()?"Suggested":"Allowed")
 		.arg(choices.join(", "))
-		.arg(field->isEditable()?" or write your own":"")
 		.toStdString());
 }
 
