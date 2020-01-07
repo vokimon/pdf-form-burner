@@ -175,23 +175,62 @@ void dump(Poppler::FormFieldSignature * field, YAML::Emitter & out) {
 class FieldTree {
 public:
 	FieldTree(Poppler::FormField * field=nullptr) : _field(field) {}
+
+	FieldTree & _addLevel(const QString & name) {
+		//step("addLevel '{}'", name);
+		if (!_children.contains(name)) {
+			_children[name] = FieldTree();
+		}
+		return _children[name];
+	}
+
+	void _addTerminal(const QString & name, Poppler::FormField * field) {
+		//step("addTerminal '{}' '{}'", name, field->name());
+		if (_children.contains(name)) {
+			warn("Overwriting existing field '{}', '{}'",
+				field->fullyQualifiedName(), field->name());
+			return;
+		}
+		_children[name] = FieldTree(field);
+	}
+	void _addLeaf(const QString & name, Poppler::FormField * field) {
+
+		//step("addLeaf '{}' '{}'", name, field? field->name():"None");
+		auto button = dynamic_cast<Poppler::FormFieldButton*>(field);
+		if (not button) {
+			_addTerminal(name, field);
+			return;
+		}
+		if (not button->siblings().length()) {
+			_addTerminal(name, field);
+			return;
+		}
+		FieldTree & intermediate = _addLevel(name);
+		intermediate._addTerminal(button->caption(), field);
+	}
+
 	void add(const QString & fullName, Poppler::FormField * field) {
+		//step("creating '{}' '{}'", fullName, field? field->name():"None");
 		int dotPos = fullName.indexOf('.');
 		if (dotPos == -1) {
-			if (_children.contains(fullName))
-				warn("Overwriting existing field '{}', '{}'",
-					fullName, field->name());
-			_children[fullName] = FieldTree(field);
+			_addLeaf(fullName, field);
 			return;
 		}
 		QString levelName = fullName.left(dotPos);
+		FieldTree & level = _addLevel(levelName);
+
 		QString remaining = fullName.mid(dotPos+1);
-		if (!_children.contains(levelName)) {
-			_children[levelName] = FieldTree();
-		}
-		FieldTree & level = _children[levelName];
 		level.add(remaining, field);
 	}
+
+	void dumpTree(const std::string & prefix="") {
+		if (_field) fmt::print("{}-> {}\n", prefix, _field->fullyQualifiedName());
+		for (auto k : _children.keys()) {
+			fmt::print("{}{}\n", prefix, k);
+			_children[k].dumpTree(prefix+"  ");
+		}
+	}
+
 	void extract(YAML::Emitter & out) {
 		if (_field) extractField(out);
 		else extractChildren(out);
