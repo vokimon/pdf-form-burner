@@ -421,13 +421,12 @@ int main(int argc, char**argv)
 				std::ifstream inyaml(arguments[1].toStdString().c_str());
 				fillPdfWithYaml(fieldTree, inyaml);
 			}
-			std::cerr << "Saving filled pdf as "<< arguments[2].toStdString() << std::endl;
+			stage("Saving filled pdf as {}", arguments[2]);
 			auto converter = std::unique_ptr<Poppler::PDFConverter>(document->pdfConverter());
 			converter->setOutputFileName(arguments[2]);
 			converter->setPDFOptions(Poppler::PDFConverter::WithChanges);
-			if (!converter->convert()) {
-				std::cerr << "Error saving file "<< arguments[2].toStdString() << std::endl;
-			}
+			converter->convert()
+				or fail("Error saving file {}", arguments[2]);
 		}
 	}
 	return 0;
