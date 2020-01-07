@@ -1,5 +1,7 @@
 *.o
 .sconsign.dblite
 .scons.options
-pdfform
+pdfformburner
+pdfformburner_legacy
+*.sw?
 
