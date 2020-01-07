@@ -1,0 +1,58 @@
+#!/usr/bin/env back2back
+datapath: b2bdata
+testcases:
+  fieldtypes:
+    command: ./pdfformburner samples/fieldtypes.pdf output.yaml 2> errors.txt
+    outputs:
+    - output.yaml
+    - errors.txt
+  fieldtypes-filled:
+    command: ./pdfformburner samples/fieldtypes-filled.pdf output.yaml 2> errors.txt
+    outputs:
+    - output.yaml
+    - errors.txt
+  fieldtypes_privateapi:
+    command: ./pdfformburner_legacy samples/fieldtypes.pdf output.yaml 2> errors.txt
+    outputs:
+    - output.yaml
+    - errors.txt
+  fieldtypes-filled_privateapi:
+    command: ./pdfformburner_legacy samples/fieldtypes-filled.pdf output.yaml 2> errors.txt
+    outputs:
+    - output.yaml
+    - errors.txt
+  fieldtypes-fill:
+    command:
+      (./pdfformburner  samples/fieldtypes-filled.pdf temp.yaml; ./pdfformburner samples/fieldtypes.pdf temp.yaml temp.pdf; ./pdfformburner temp.pdf output.yaml ) 2> errors.txt
+    outputs:
+    #- temp.pdf
+    - output.yaml
+    - errors.txt
+  radiobuttons:
+    command:
+      ./pdfformburner  samples/radiobuttons.pdf output.yaml 2> errors.txt
+    outputs:
+    - output.yaml
+    - errors.txt
+  radiobuttons-fill:
+    command: |
+      (
+        ./pdfformburner samples/radiobuttons.pdf edited.yaml;
+        sed -i 's,3: false,3: true,' edited.yaml;
+        sed -i 's,B: false,B: true,' edited.yaml;
+        ./pdfformburner samples/radiobuttons.pdf edited.yaml temp.pdf;
+        ./pdfformburner temp.pdf output.yaml;
+      ) 2> errors.txt
+    outputs:
+    - edited.yaml
+    - output.yaml
+    - errors.txt
+  dumpAllSamples:
+    command:
+      (for a in samples/*pdf; do echo ==== $a; echo ==== $a >&2; ./pdfformburner $a ; echo ; done) > output 2> error
+    outputs:
+    - output
+    - error
+  
+  
+# vim: et sw=2 ts=2

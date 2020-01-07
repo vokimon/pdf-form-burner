@@ -1,0 +1,4 @@
+[34;1m== Loading samples/fieldtypes.pdf[0m
+[34;1m== Looking for form fields[0m
+[33mWarning: Push button ignored 'Button1'[0m
+[33mWarning: File select not fully supported, managed as simple text, field FileSelect1[0m

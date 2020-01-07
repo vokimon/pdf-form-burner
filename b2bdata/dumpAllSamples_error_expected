@@ -1,0 +1,54 @@
+==== samples/Guifibaix-MandatoSEPA-original.pdf
+[34;1m== Loading samples/Guifibaix-MandatoSEPA-original.pdf[0m
+[34;1m== Looking for form fields[0m
+==== samples/OoPdfFormExample.pdf
+[34;1m== Loading samples/OoPdfFormExample.pdf[0m
+[34;1m== Looking for form fields[0m
+==== samples/RadioCheckBox_AcroForm.pdf
+[34;1m== Loading samples/RadioCheckBox_AcroForm.pdf[0m
+[34;1m== Looking for form fields[0m
+[33mWarning: Push button ignored 'Button3'[0m
+==== samples/SampleForm-1.pdf
+[34;1m== Loading samples/SampleForm-1.pdf[0m
+[34;1m== Looking for form fields[0m
+"Error: Invalid number of bits needed to represent the difference between the greatest and least number of objects in a page"
+[33mWarning: Push button ignored 'AloahaFormSaveButton'[0m
+[33mWarning: Push button ignored 'AloahaFormSubmitButton'[0m
+==== samples/SignatureSample.pdf
+[34;1m== Loading samples/SignatureSample.pdf[0m
+[34;1m== Looking for form fields[0m
+==== samples/blank_signed.pdf
+[34;1m== Loading samples/blank_signed.pdf[0m
+[34;1m== Looking for form fields[0m
+==== samples/fieldtypes-filled.pdf
+[34;1m== Loading samples/fieldtypes-filled.pdf[0m
+[34;1m== Looking for form fields[0m
+[33mWarning: Push button ignored 'Button1'[0m
+[33mWarning: File select not fully supported, managed as simple text, field FileSelect1[0m
+==== samples/fieldtypes.pdf
+[34;1m== Loading samples/fieldtypes.pdf[0m
+[34;1m== Looking for form fields[0m
+[33mWarning: Push button ignored 'Button1'[0m
+[33mWarning: File select not fully supported, managed as simple text, field FileSelect1[0m
+==== samples/incometaxform.pdf
+[34;1m== Loading samples/incometaxform.pdf[0m
+[34;1m== Looking for form fields[0m
+"Error: Invalid number of bits needed to represent the difference between the greatest and least number of objects in a page"
+[33mWarning: Push button ignored 'AloahaFormSaveButton'[0m
+[33mWarning: Push button ignored 'AloahaFormSubmitButton'[0m
+==== samples/radiobuttons.pdf
+[34;1m== Loading samples/radiobuttons.pdf[0m
+[34;1m== Looking for form fields[0m
+==== samples/sample06.pdf
+[34;1m== Loading samples/sample06.pdf[0m
+[34;1m== Looking for form fields[0m
+"Error (0): Unable to validate this type of signature"
+"Error (0): Unable to validate this type of signature"
+"Error (0): Unable to validate this type of signature"
+==== samples/sample_signature_form_carleton_u_v5.pdf
+[34;1m== Loading samples/sample_signature_form_carleton_u_v5.pdf[0m
+[34;1m== Looking for form fields[0m
+[33mWarning: Push button ignored 'TopmostSubform[0].Page1[0]﻿.PrintButton1[0]'[0m
+[33mWarning: Push button ignored 'TopmostSubform[0].Page1[0]﻿.PrintButton2[0]'[0m
+[33mWarning: Push button ignored 'TopmostSubform[0].Page1[0]﻿.PrintButton3[0]'[0m
+[33mWarning: Push button ignored 'TopmostSubform[0].Page1[0]﻿.ResetButton1[0]'[0m
