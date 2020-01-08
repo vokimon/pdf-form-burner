@@ -48,9 +48,8 @@ Some fields are not fully supported yet:
 - Signature info is extracted and validated but not filled (no signing yet)
 - Multilines add a new empty line each extract/fill cycle 
 - Actions related to fields (derived fields...) are not executed
-- Some field ui names are exported as 'þÿ' because a bug
-  in poppler-qt5 that has been fixed and due to be released
-  as poppler 0.85.0
+- Using poppler up to 0.84.0, due to a bug fixed in later versions,
+  some field ui names (used to comment the field) are exported as 'þÿ'
 
 ## Dependencies
 
