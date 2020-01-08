@@ -153,20 +153,14 @@ void dump(Poppler::FormFieldSignature * field, YAML::Emitter & out) {
 		Poppler::FormFieldSignature::ValidateVerifyCertificate);
 	out << YAML::BeginMap;
 	out
-		<< YAML::Key << "status"
-		<< YAML::Value << info.signatureStatus()
-		<< YAML::Key << "signer"
-		<< YAML::Value << info.signerName()
-		<< YAML::Key << "time"
-		<< YAML::Value << QDateTime::fromMSecsSinceEpoch(
+		<< "status" << info.signatureStatus()
+		<< "signer" << info.signerName()
+		<< "time" << QDateTime::fromMSecsSinceEpoch(
 				info.signingTime(), Qt::UTC)
 			.toString(Qt::ISODate)
-		<< YAML::Key << "location"
-		<< YAML::Value << info.location()
-		<< YAML::Key << "reason"
-		<< YAML::Value << info.reason()
-		<< YAML::Key << "scope"
-		<< YAML::Value << (info.signsTotalDocument()?"Total":"Partial")
+		<< "location" << info.location()
+		<< "reason" << info.reason()
+		<< "scope" << (info.signsTotalDocument()?"Total":"Partial")
 	;
 	out << YAML::EndMap;
 }
@@ -239,7 +233,7 @@ public:
 	void extractChildren(YAML::Emitter & out) {
 		out << YAML::BeginMap;
 		for (auto key : _children.keys()) {
-			out << YAML::Key << key << YAML::Value;
+			out << key;
 			_children[key].extract(out);
 		}
 		out << YAML::EndMap;
