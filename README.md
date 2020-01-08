@@ -44,10 +44,13 @@ the only encoding you have to deal with is [UTF-8].
 
 Some fields are not fully supported yet:
 
-- RadioButtons are not working yet
 - FileSelects just fills and extracts the name, not the file content
-- Signature info is extracted and validated but not filled (Signing)
+- Signature info is extracted and validated but not filled (no signing yet)
+- Multilines add a new empty line each extract/fill cycle 
 - Actions related to fields (derived fields...) are not executed
+- Some field ui names are exported as 'þÿ' because a bug
+  in poppler-qt5 that has been fixed and due to be released
+  as poppler 0.85.0
 
 ## Dependencies
 
@@ -85,6 +88,7 @@ gbp buildpackage --git-ignore-new --git-upstream-branch=master --git-debian-bran
 - New version based on poppler-qt5 instead of the private poppler api
 - Editable ChoiceFields working
 - Multiple ChoiceFields working
+- Buttons with sibblings (Radio like) working
 - FileSelect TextFiels working, but just takes the name, not the contents
 - Exports signature field data
 - Fix: PushButtons broke yamls
@@ -93,12 +97,6 @@ gbp buildpackage --git-ignore-new --git-upstream-branch=master --git-debian-bran
 	- Fix: PushButtons broke yamls
 - Regression tests added
 - Man page
-- Known bugs:
-  	- Some field ui names are exported as 'þÿ'
-	  because a bug in poppler-qt5 (a fix is to be released)
-	- RadioButtons still not working
-	- No filling for signatures
-	- Multilines add a new empty line each extract/fill cycle 
 
 ### 1.3
 
