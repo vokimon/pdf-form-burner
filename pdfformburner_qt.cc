@@ -128,6 +128,13 @@ void dump(Poppler::FormFieldText * field, YAML::Emitter & out) {
 void dump(Poppler::FormFieldChoice * field, YAML::Emitter & out) {
 	auto choices = field->choices();
 	auto currentChoices = field->currentChoices();
+	out << YAML::Newline;
+	out << YAML::Comment((field->isEditable()?
+			translate("Suggested values: %1"):
+			translate("Allowed values: %1"))
+		.arg(choices.join(QStringLiteral(", ")))
+		.toStdString()
+		);
 	if (field->multiSelect()) {
 		out << YAML::BeginSeq;
 		for (auto i: currentChoices) {
@@ -141,11 +148,6 @@ void dump(Poppler::FormFieldChoice * field, YAML::Emitter & out) {
 	else {
 		out << (currentChoices.empty()?"":choices[currentChoices.first()]);
 	}
-	out << YAML::Comment(translate("%1 values: %2")
-		.arg(field->isEditable()?translate("Suggested"):translate("Allowed"))
-		.arg(choices.join(QStringLiteral(", ")))
-		.toStdString()
-		);
 }
 
 void dump(Poppler::FormFieldSignature * field, YAML::Emitter & out) {
@@ -240,6 +242,12 @@ public:
 	}
 
 	void extractField(YAML::Emitter & out) {
+		QString comment = translate("%1%2")
+			.arg(_field->name()!=_field->uiName()?_field->uiName():QString())
+			.arg(_field->isReadOnly()?" [Read Only]":"")
+			;
+		if (!comment.isEmpty())
+			out << YAML::Comment(comment.toStdString());
 		switch (_field->type()) {
 			case Poppler::FormField::FormButton:
 				dump(dynamic_cast<Poppler::FormFieldButton*>(_field), out);
@@ -254,12 +262,6 @@ public:
 				dump(dynamic_cast<Poppler::FormFieldSignature*>(_field), out);
 				break;
 		}
-		QString comment = translate("%1%2")
-			.arg(_field->name()!=_field->uiName()?_field->uiName():QString())
-			.arg(_field->isReadOnly()?" [Read Only]":"")
-			;
-		if (!comment.isEmpty())
-			out << YAML::Comment(comment.toStdString());
 	}
 
 
