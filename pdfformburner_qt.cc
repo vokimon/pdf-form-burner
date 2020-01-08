@@ -223,11 +223,11 @@ public:
 		level.add(remaining, field);
 	}
 
-	void dumpTree(const std::string & prefix="") {
+	void debugTree(const std::string & prefix="") {
 		if (_field) fmt::print("{}-> {}\n", prefix, _field->fullyQualifiedName());
 		for (auto k : _children.keys()) {
 			fmt::print("{}{}\n", prefix, k);
-			_children[k].dumpTree(prefix+"  ");
+			_children[k].debugTree(prefix+"  ");
 		}
 	}
 
