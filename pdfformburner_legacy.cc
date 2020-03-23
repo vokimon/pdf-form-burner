@@ -203,8 +203,10 @@ int extract(FormFieldChoice * field, YAML::Emitter & out)
 int extract(FormFieldButton * field, YAML::Emitter & out)
 {
 	FormButtonType type = field->getButtonType();
-	if (type == formButtonPush)
+	if (type == formButtonPush) {
+		out << YAML::Value << YAML::Null;
 		return error("Push button ignored");
+	}
 	out
 		<< YAML::Value << not field->getState((char*)"Off");
 	if (showTypes)

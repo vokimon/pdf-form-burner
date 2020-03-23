@@ -1,0 +1,2 @@
+[34;1m== Loading samples/radiobuttons.pdf[0m
+[34;1m== Looking for form fields[0m
