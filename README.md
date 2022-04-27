@@ -60,7 +60,7 @@ Some fields are not fully supported yet:
 So in Debian and Ubuntu:
 
 ```bash
-$ sudo apt install libyaml-cpp-dev libpoppler-dev scons libboost-dev
+$ sudo apt install scons libyaml-cpp-dev libpoppler-dev scons libboost-dev
 ```
 
 ## Install
