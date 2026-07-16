@@ -15,7 +15,6 @@ env.Append(LIBS=['fmt'])
 env.Append(CCFLAGS=[
 	'-g',
 	'-fPIC',
-	'-std=c++14',
 	])
 
 
