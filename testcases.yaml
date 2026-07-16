@@ -11,16 +11,6 @@ testcases:
     outputs:
     - output.yaml
     - errors.txt
-  fieldtypes_privateapi:
-    command: ./pdfformburner_legacy samples/fieldtypes.pdf output.yaml 2> errors.txt
-    outputs:
-    - output.yaml
-    - errors.txt
-  fieldtypes-filled_privateapi:
-    command: ./pdfformburner_legacy samples/fieldtypes-filled.pdf output.yaml 2> errors.txt
-    outputs:
-    - output.yaml
-    - errors.txt
   fieldtypes-fill:
     command:
       (./pdfformburner  samples/fieldtypes-filled.pdf temp.yaml; ./pdfformburner samples/fieldtypes.pdf temp.yaml temp.pdf; ./pdfformburner temp.pdf output.yaml ) 2> errors.txt

@@ -25,7 +25,6 @@ Help2Man = env.Append(BUILDERS={'Help2Man': Builder(
 	src_suffix = '',
 )})
 
-program_legacy = env.Program('pdfformburner_legacy', Glob("pdfformburner_legacy.cc"))
 program = env.Program('pdfformburner', Glob("pdfformburner_qt.cc"))
 manpage = env.Help2Man(source=program)
 
