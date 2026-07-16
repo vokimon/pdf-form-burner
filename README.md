@@ -56,18 +56,19 @@ Some fields are not fully supported yet:
 - Scons, to build it
 - poppler-qt5, to access PDF elements
 - yaml-cpp, to load and dump YAML files
+- help2man, to build man page
 
 So in Debian and Ubuntu:
 
 ```bash
-$ sudo apt install scons help2man libyaml-cpp-dev libpoppler-qt5-dev libboost-dev libfmt-dev
+$ sudo apt install scons help2man libyaml-cpp-dev libpoppler-qt5-dev libboost-dev libfmt-dev help2man
 ```
 
 ## Install
 
 ```bash
 $ scons
-$ sudo scons intall
+$ sudo scons install
 ```
 
 ## Debian packaging
