@@ -1,0 +1,6 @@
+scons
+help2man
+libpoppler-qt5-dev
+libboost-dev
+libfmt-dev
+help2man
