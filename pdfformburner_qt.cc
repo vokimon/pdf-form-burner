@@ -51,16 +51,25 @@ static void stage(const std::string & message, Args ... args) {
 	colorize(std::cerr, "34;1", "== ", message, args...);
 }
 
+template <>
+struct fmt::formatter<QString> : fmt::formatter<fmt::string_view> {
+    auto format(const QString& s, format_context& ctx) const {
+        QByteArray utf8 = s.toUtf8();
+        return fmt::formatter<fmt::string_view>::format(
+            fmt::string_view(utf8.constData(), utf8.size()), ctx);
+    }
+};
+
 #define BEGIN_ENUM(NS, TYPE) \
-std::ostream & operator << (std::ostream & os, NS::TYPE value) {\
+template <> struct fmt::formatter<NS::TYPE> : fmt::ostream_formatter {};\
+inline std::ostream & operator << (std::ostream & os, NS::TYPE value) {\
 	typedef NS host; \
 	switch(value) {
 #define ENUM_VALUE(VAL) case(host::VAL): return os << #VAL;
 #define END_ENUM \
 	default: return os << "Invalid"; \
 	}\
-}
-
+}\
 
 BEGIN_ENUM(Poppler::FormField, FormType)
 	ENUM_VALUE(FormButton)
